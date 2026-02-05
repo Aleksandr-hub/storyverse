@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(composer create-project:*)",
+      "Bash(npm create vue@latest:*)",
+      "Bash(npm install:*)",
+      "Bash(composer require:*)",
+      "Bash(docker:*)",
+      "Bash(docker compose:*)",
+      "Bash(lsof:*)",
+      "Bash(curl:*)",
+      "Bash(ls:*)",
+      "Bash(git init:*)"
+    ]
+  }
+}
