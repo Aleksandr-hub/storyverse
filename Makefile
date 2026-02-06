@@ -1,10 +1,11 @@
-.PHONY: help install dev up down restart build logs shell test migrate fresh seed
+.PHONY: help install dev up down restart build logs shell test migrate fresh seed setup-hooks
 
 # Default target
 help:
 	@echo "StoryVerse Development Commands"
 	@echo ""
 	@echo "  make install     - First time setup (build, install deps, migrate)"
+	@echo "  make setup-hooks - Install git pre-commit hooks"
 	@echo "  make dev         - Start development environment"
 	@echo "  make up          - Start all containers"
 	@echo "  make down        - Stop all containers"
@@ -27,7 +28,7 @@ help:
 	@echo "  make npm         - Run npm command (use: make npm cmd='install')"
 
 # First time setup
-install:
+install: setup-hooks
 	@echo "🚀 Setting up StoryVerse..."
 	@cp -n .env.example .env 2>/dev/null || true
 	@cp -n backend/.env.example backend/.env 2>/dev/null || true
@@ -142,3 +143,9 @@ ide:
 	docker compose exec app php artisan ide-helper:generate
 	docker compose exec app php artisan ide-helper:models -N
 	docker compose exec app php artisan ide-helper:meta
+
+# Git hooks setup
+setup-hooks:
+	@echo "🔧 Setting up git hooks..."
+	git config core.hooksPath .githooks
+	@echo "✅ Git hooks configured! Pre-commit will now run Pint, PHPStan, ESLint, and TypeScript checks."

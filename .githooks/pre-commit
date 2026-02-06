@@ -1,0 +1,77 @@
+#!/bin/bash
+
+# StoryVerse Pre-Commit Hook
+# Runs code quality checks before allowing commits
+
+set -e
+
+echo "🔍 Running pre-commit checks..."
+echo ""
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+# Get the root directory
+ROOT_DIR=$(git rev-parse --show-toplevel)
+
+# Check if there are staged PHP files
+STAGED_PHP=$(git diff --cached --name-only --diff-filter=ACM | grep "\.php$" || true)
+
+# Check if there are staged frontend files
+STAGED_FRONTEND=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^frontend/.*\.(ts|vue|js)$" || true)
+
+# Backend checks
+if [ -n "$STAGED_PHP" ]; then
+    echo "📦 Backend: Running PHP checks..."
+
+    cd "$ROOT_DIR/backend"
+
+    # Laravel Pint (code style)
+    echo "  → Running Pint..."
+    if ! vendor/bin/pint --test --quiet 2>/dev/null; then
+        echo -e "${RED}❌ Pint failed! Run 'vendor/bin/pint' to fix code style.${NC}"
+        exit 1
+    fi
+    echo -e "  ${GREEN}✓ Pint passed${NC}"
+
+    # PHPStan (static analysis)
+    echo "  → Running PHPStan..."
+    if ! vendor/bin/phpstan analyse --memory-limit=512M --no-progress --quiet 2>/dev/null; then
+        echo -e "${RED}❌ PHPStan failed! Run 'vendor/bin/phpstan analyse' to see errors.${NC}"
+        exit 1
+    fi
+    echo -e "  ${GREEN}✓ PHPStan passed${NC}"
+
+    cd "$ROOT_DIR"
+    echo ""
+fi
+
+# Frontend checks
+if [ -n "$STAGED_FRONTEND" ]; then
+    echo "🎨 Frontend: Running checks..."
+
+    cd "$ROOT_DIR/frontend"
+
+    # ESLint
+    echo "  → Running ESLint..."
+    if ! npm run lint --silent 2>/dev/null; then
+        echo -e "${RED}❌ ESLint failed! Run 'npm run lint' to see errors.${NC}"
+        exit 1
+    fi
+    echo -e "  ${GREEN}✓ ESLint passed${NC}"
+
+    # TypeScript check
+    echo "  → Running TypeScript check..."
+    if ! npm run type-check --silent 2>/dev/null; then
+        echo -e "${RED}❌ TypeScript check failed! Run 'npm run type-check' to see errors.${NC}"
+        exit 1
+    fi
+    echo -e "  ${GREEN}✓ TypeScript passed${NC}"
+
+    cd "$ROOT_DIR"
+    echo ""
+fi
+
+echo -e "${GREEN}✅ All pre-commit checks passed!${NC}"
