@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Log;
 class ClaudeProvider implements AIProviderInterface
 {
     private string $apiKey;
+
     private string $baseUrl = 'https://api.anthropic.com/v1';
+
     private string $model;
 
     public function __construct()
@@ -23,7 +25,7 @@ class ClaudeProvider implements AIProviderInterface
      */
     public function chat(string $systemPrompt, string $userMessage, int $maxTokens = 1024): ?string
     {
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             return null;
         }
 
@@ -43,6 +45,7 @@ class ClaudeProvider implements AIProviderInterface
 
             if ($response->successful()) {
                 $data = $response->json();
+
                 return $data['content'][0]['text'] ?? null;
             }
 
@@ -58,6 +61,7 @@ class ClaudeProvider implements AIProviderInterface
                 'provider' => $this->getName(),
                 'message' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -67,7 +71,7 @@ class ClaudeProvider implements AIProviderInterface
      */
     public function isAvailable(): bool
     {
-        return !empty($this->apiKey);
+        return ! empty($this->apiKey);
     }
 
     /**

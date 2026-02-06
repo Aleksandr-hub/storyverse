@@ -57,7 +57,7 @@ class User extends Authenticatable
      */
     public function isOAuthUser(): bool
     {
-        return !empty($this->oauth_provider);
+        return ! empty($this->oauth_provider);
     }
 
     /**
@@ -65,7 +65,7 @@ class User extends Authenticatable
      */
     public function hasPassword(): bool
     {
-        return !empty($this->password);
+        return ! empty($this->password);
     }
 
     /**
@@ -81,7 +81,7 @@ class User extends Authenticatable
      */
     public function getAvatarAttribute(): string
     {
-        return $this->avatar_url ?? 'https://ui-avatars.com/api/?name=' . urlencode($this->display_name) . '&background=random';
+        return $this->avatar_url ?? 'https://ui-avatars.com/api/?name='.urlencode($this->display_name).'&background=random';
     }
 
     public function stories(): HasMany

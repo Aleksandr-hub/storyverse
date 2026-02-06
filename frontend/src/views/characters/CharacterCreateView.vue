@@ -70,8 +70,9 @@ const handleAvatarUpload = async (event: Event) => {
   try {
     const res = await uploadApi.upload(file, 'avatar')
     form.value.avatar_url = res.data.url
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Помилка завантаження'
+  } catch (err: unknown) {
+    const e = err as { response?: { data?: { message?: string } } }
+    error.value = e.response?.data?.message || 'Помилка завантаження'
   } finally {
     avatarUploading.value = false
     input.value = ''
@@ -110,8 +111,9 @@ const loadCharacter = async () => {
         skills: character.traits?.skills || [],
       },
     }
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Персонажа не знайдено'
+  } catch (err: unknown) {
+    const e = err as { response?: { data?: { message?: string } } }
+    error.value = e.response?.data?.message || 'Персонажа не знайдено'
   } finally {
     loadingCharacter.value = false
   }
@@ -127,7 +129,13 @@ const submit = async () => {
   error.value = ''
 
   try {
-    const data: any = {
+    const data: {
+      name: string
+      description?: string
+      avatar_url?: string
+      universe_id?: string
+      traits?: { personality?: string; appearance?: string; skills?: string[] }
+    } = {
       name: form.value.name.trim(),
       description: form.value.description.trim() || undefined,
       avatar_url: form.value.avatar_url || undefined,
@@ -149,8 +157,9 @@ const submit = async () => {
       const res = await charactersApi.create(data)
       router.push(`/characters/${res.data.character.id}`)
     }
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Помилка збереження'
+  } catch (err: unknown) {
+    const e = err as { response?: { data?: { message?: string } } }
+    error.value = e.response?.data?.message || 'Помилка збереження'
   } finally {
     loading.value = false
   }

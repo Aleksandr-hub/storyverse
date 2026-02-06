@@ -15,7 +15,7 @@ class ChapterPolicyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->policy = new ChapterPolicy();
+        $this->policy = new ChapterPolicy;
     }
 
     public function test_view_any_allows_for_public_story(): void
@@ -170,22 +170,34 @@ class ChapterPolicyTest extends TestCase
     private function createMockUser(string $id): User
     {
         $user = $this->createMock(User::class);
-        $user->id = $id;
+        $user->method('__get')->willReturnCallback(fn ($property) => match ($property) {
+            'id' => $id,
+            default => null,
+        });
+
         return $user;
     }
 
     private function createMockStory(bool $isPublic = true, string $authorId = 'user-123'): Story
     {
         $story = $this->createMock(Story::class);
-        $story->is_public = $isPublic;
-        $story->author_id = $authorId;
+        $story->method('__get')->willReturnCallback(fn ($property) => match ($property) {
+            'is_public' => $isPublic,
+            'author_id' => $authorId,
+            default => null,
+        });
+
         return $story;
     }
 
     private function createMockChapter(Story $story): Chapter
     {
         $chapter = $this->createMock(Chapter::class);
-        $chapter->story = $story;
+        $chapter->method('__get')->willReturnCallback(fn ($property) => match ($property) {
+            'story' => $story,
+            default => null,
+        });
+
         return $chapter;
     }
 }

@@ -53,8 +53,9 @@ const handleCoverUpload = async (event: Event) => {
   try {
     const res = await uploadApi.upload(file, 'cover')
     form.value.cover_url = res.data.url
-  } catch (err: any) {
-    coverError.value = err.response?.data?.message || 'Помилка завантаження'
+  } catch (err: unknown) {
+    const e = err as { response?: { data?: { message?: string } } }
+    coverError.value = e.response?.data?.message || 'Помилка завантаження'
   } finally {
     coverUploading.value = false
     input.value = ''
@@ -76,7 +77,10 @@ const ratingOptions = [
 const saveSettings = async () => {
   if (!story.value) return
 
-  const result = await storiesStore.updateStory(story.value.id, form.value)
+  const result = await storiesStore.updateStory(story.value.id, {
+    ...form.value,
+    cover_url: form.value.cover_url ?? undefined,
+  })
   if (!result.success) {
     alert(result.message || 'Помилка збереження')
   }
@@ -204,11 +208,12 @@ const continueWithAI = async () => {
     }
     aiPrompt.value = ''
     showAiPanel.value = false
-  } catch (err: any) {
-    if (err.response?.status === 429) {
+  } catch (err: unknown) {
+    const e = err as { response?: { status?: number; data?: { message?: string } } }
+    if (e.response?.status === 429) {
       aiError.value = 'Ліміт AI запитів вичерпано. Спробуйте пізніше.'
     } else {
-      aiError.value = err.response?.data?.message || 'Помилка AI сервісу'
+      aiError.value = e.response?.data?.message || 'Помилка AI сервісу'
     }
   } finally {
     aiLoading.value = false
@@ -227,11 +232,12 @@ const getAiSuggestions = async () => {
       chapter_id: editingChapter.value || undefined,
     })
     aiSuggestions.value = res.data.suggestions
-  } catch (err: any) {
-    if (err.response?.status === 429) {
+  } catch (err: unknown) {
+    const e = err as { response?: { status?: number; data?: { message?: string } } }
+    if (e.response?.status === 429) {
       aiError.value = 'Ліміт AI запитів вичерпано. Спробуйте пізніше.'
     } else {
-      aiError.value = err.response?.data?.message || 'Помилка AI сервісу'
+      aiError.value = e.response?.data?.message || 'Помилка AI сервісу'
     }
   } finally {
     aiLoading.value = false
@@ -268,13 +274,14 @@ const continueWithAdultAI = async () => {
     }
     aiPrompt.value = ''
     showAiPanel.value = false
-  } catch (err: any) {
-    if (err.response?.status === 503) {
+  } catch (err: unknown) {
+    const e = err as { response?: { status?: number; data?: { message?: string } } }
+    if (e.response?.status === 503) {
       aiError.value = 'Ollama не запущено. Запустіть: docker compose up ollama'
-    } else if (err.response?.status === 403) {
+    } else if (e.response?.status === 403) {
       aiError.value = 'Цей режим доступний лише для історій з рейтингом 18+'
     } else {
-      aiError.value = err.response?.data?.message || 'Помилка AI сервісу'
+      aiError.value = e.response?.data?.message || 'Помилка AI сервісу'
     }
   } finally {
     aiLoading.value = false
@@ -285,7 +292,7 @@ const continueWithAdultAI = async () => {
 const countWords = (text: string): number => {
   if (!text) return 0
   // Remove markdown formatting
-  const cleaned = text.replace(/[*_~`#\[\]()>-]+/g, ' ')
+  const cleaned = text.replace(/[*_~`#[\]()>-]+/g, ' ')
   // Match words (Latin + Cyrillic + numbers + apostrophes)
   const matches = cleaned.match(/[\p{L}\p{N}']+/gu)
   return matches ? matches.length : 0
@@ -336,7 +343,7 @@ onMounted(async () => {
               <span :class="['status-badge', story.status === 'draft' ? 'status-draft' : 'status-published']">
                 {{ story.status === 'draft' ? 'Чернетка' : 'Опубліковано' }}
               </span>
-              <span>{{ story.word_count.toLocaleString() }} слів</span>
+              <span>{{ (story.word_count ?? 0).toLocaleString() }} слів</span>
             </div>
 
             <button

@@ -60,6 +60,9 @@ class Chapter extends Model
         return count($matches[0]);
     }
 
+    /**
+     * @return BelongsTo<Story, $this>
+     */
     public function story(): BelongsTo
     {
         return $this->belongsTo(Story::class);

@@ -9,6 +9,7 @@ class UpdateStoryRequest extends FormRequest
     public function authorize(): bool
     {
         $story = $this->route('story');
+
         return $story && $this->user()->id === $story->author_id;
     }
 

@@ -40,8 +40,9 @@ const loadCharacter = async () => {
   try {
     const res = await charactersApi.get(route.params.id as string)
     character.value = res.data.character
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Персонажа не знайдено'
+  } catch (err: unknown) {
+    const e = err as { response?: { data?: { message?: string } } }
+    error.value = e.response?.data?.message || 'Персонажа не знайдено'
   } finally {
     loading.value = false
   }
@@ -54,8 +55,9 @@ const deleteCharacter = async () => {
   try {
     await charactersApi.delete(character.value.id)
     router.push('/characters')
-  } catch (err: any) {
-    alert(err.response?.data?.message || 'Помилка видалення')
+  } catch (err: unknown) {
+    const e = err as { response?: { data?: { message?: string } } }
+    alert(e.response?.data?.message || 'Помилка видалення')
   }
 }
 

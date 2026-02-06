@@ -43,7 +43,7 @@ class ChapterController extends Controller
         ], 201);
     }
 
-    public function show(Story $story, Chapter $chapter): ChapterResource|JsonResponse
+    public function show(Story $story, Chapter $chapter): JsonResponse
     {
         if ($chapter->story_id !== $story->id) {
             abort(404, 'Главу не знайдено');
@@ -53,7 +53,7 @@ class ChapterController extends Controller
 
         $chapter->load('illustrations');
 
-        return new ChapterResource($chapter);
+        return response()->json(new ChapterResource($chapter));
     }
 
     public function update(UpdateChapterRequest $request, Chapter $chapter): JsonResponse

@@ -26,7 +26,7 @@ class MeController extends Controller
         $user = $request->user();
 
         $validated = $request->validate([
-            'username' => ['sometimes', 'string', 'min:3', 'max:50', 'unique:users,username,' . $user->id, 'regex:/^[a-zA-Z0-9_-]+$/'],
+            'username' => ['sometimes', 'string', 'min:3', 'max:50', 'unique:users,username,'.$user->id, 'regex:/^[a-zA-Z0-9_-]+$/'],
             'bio' => ['nullable', 'string', 'max:500'],
             'avatar_url' => ['nullable', 'url', 'max:500'],
         ], [

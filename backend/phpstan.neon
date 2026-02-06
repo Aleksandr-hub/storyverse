@@ -1,0 +1,21 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    # Start with level 5, increase gradually
+    # Level 9 (max) is the goal
+    level: 5
+
+    paths:
+        - app/
+
+    # Laravel-specific settings
+    checkModelProperties: true
+
+    # Ignore common Laravel patterns for now
+    # TODO: Fix these and remove from ignoreErrors as we improve type coverage
+    ignoreErrors:
+        # Eloquent magic properties (until we add proper PHPDoc to models)
+        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model::\$#'
+        # Socialite stateless() method (not in interface but exists)
+        - '#Call to an undefined method Laravel\\Socialite\\Contracts\\Provider::stateless#'

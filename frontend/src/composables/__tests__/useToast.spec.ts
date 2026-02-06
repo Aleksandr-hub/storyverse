@@ -19,8 +19,8 @@ describe('useToast', () => {
       toast.show('Test message', 'info')
 
       expect(toast.toasts.value).toHaveLength(1)
-      expect(toast.toasts.value[0].message).toBe('Test message')
-      expect(toast.toasts.value[0].type).toBe('info')
+      expect(toast.toasts.value[0]!.message).toBe('Test message')
+      expect(toast.toasts.value[0]!.type).toBe('info')
     })
 
     it('should auto-remove toast after duration', () => {
@@ -63,25 +63,25 @@ describe('useToast', () => {
     it('success should create success toast', () => {
       toast.success('Success!')
 
-      expect(toast.toasts.value[0].type).toBe('success')
+      expect(toast.toasts.value[0]!.type).toBe('success')
     })
 
     it('error should create error toast', () => {
       toast.error('Error!')
 
-      expect(toast.toasts.value[0].type).toBe('error')
+      expect(toast.toasts.value[0]!.type).toBe('error')
     })
 
     it('warning should create warning toast', () => {
       toast.warning('Warning!')
 
-      expect(toast.toasts.value[0].type).toBe('warning')
+      expect(toast.toasts.value[0]!.type).toBe('warning')
     })
 
     it('info should create info toast', () => {
       toast.info('Info!')
 
-      expect(toast.toasts.value[0].type).toBe('info')
+      expect(toast.toasts.value[0]!.type).toBe('info')
     })
   })
 

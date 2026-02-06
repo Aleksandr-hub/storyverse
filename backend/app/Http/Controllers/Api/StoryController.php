@@ -30,7 +30,7 @@ class StoryController extends Controller
     {
         $data = $request->validated();
         $data['author_id'] = $request->user()->id;
-        $data['slug'] = Str::slug($data['title']) . '-' . Str::random(8);
+        $data['slug'] = Str::slug($data['title']).'-'.Str::random(8);
 
         $story = Story::create($data);
 
@@ -71,7 +71,7 @@ class StoryController extends Controller
         $data = $request->validated();
 
         if (isset($data['title']) && $data['title'] !== $story->title) {
-            $data['slug'] = Str::slug($data['title']) . '-' . Str::random(8);
+            $data['slug'] = Str::slug($data['title']).'-'.Str::random(8);
         }
 
         if (isset($data['status']) && $data['status'] === 'published' && $story->status !== 'published') {

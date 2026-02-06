@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Log;
 class OpenAIProvider implements AIProviderInterface
 {
     private string $apiKey;
+
     private string $baseUrl = 'https://api.openai.com/v1';
+
     private string $model;
 
     public function __construct()
@@ -23,7 +25,7 @@ class OpenAIProvider implements AIProviderInterface
      */
     public function chat(string $systemPrompt, string $userMessage, int $maxTokens = 1024): ?string
     {
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             return null;
         }
 
@@ -42,6 +44,7 @@ class OpenAIProvider implements AIProviderInterface
 
             if ($response->successful()) {
                 $data = $response->json();
+
                 return $data['choices'][0]['message']['content'] ?? null;
             }
 
@@ -57,6 +60,7 @@ class OpenAIProvider implements AIProviderInterface
                 'provider' => $this->getName(),
                 'message' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -66,7 +70,7 @@ class OpenAIProvider implements AIProviderInterface
      */
     public function isAvailable(): bool
     {
-        return !empty($this->apiKey);
+        return ! empty($this->apiKey);
     }
 
     /**

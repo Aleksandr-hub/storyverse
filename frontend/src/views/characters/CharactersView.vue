@@ -48,7 +48,7 @@ const loadCharacters = async (page = 1) => {
   error.value = ''
 
   try {
-    const params: any = { per_page: 20, page }
+    const params: Record<string, unknown> = { per_page: 20, page }
     if (filters.value.universe) params.universe = filters.value.universe
     if (filters.value.search) params.search = filters.value.search
     if (filters.value.canonical) params.canonical = filters.value.canonical === 'true'
@@ -60,8 +60,9 @@ const loadCharacters = async (page = 1) => {
       lastPage: res.data.meta.last_page,
       total: res.data.meta.total,
     }
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Помилка завантаження персонажів'
+  } catch (err: unknown) {
+    const e = err as { response?: { data?: { message?: string } } }
+    error.value = e.response?.data?.message || 'Помилка завантаження персонажів'
   } finally {
     loading.value = false
   }
@@ -77,7 +78,7 @@ const loadUniverses = async () => {
 }
 
 const applyFilters = () => {
-  const query: any = {}
+  const query: Record<string, string> = {}
   if (filters.value.universe) query.universe = filters.value.universe
   if (filters.value.search) query.search = filters.value.search
   if (filters.value.canonical) query.canonical = filters.value.canonical

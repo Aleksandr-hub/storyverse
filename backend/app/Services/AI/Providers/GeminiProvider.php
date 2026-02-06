@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Log;
 class GeminiProvider implements AIProviderInterface
 {
     private string $apiKey;
+
     private string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
+
     private string $model;
 
     public function __construct()
@@ -23,7 +25,7 @@ class GeminiProvider implements AIProviderInterface
      */
     public function chat(string $systemPrompt, string $userMessage, int $maxTokens = 1024): ?string
     {
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             return null;
         }
 
@@ -54,6 +56,7 @@ class GeminiProvider implements AIProviderInterface
 
             if ($response->successful()) {
                 $data = $response->json();
+
                 return $data['candidates'][0]['content']['parts'][0]['text'] ?? null;
             }
 
@@ -69,6 +72,7 @@ class GeminiProvider implements AIProviderInterface
                 'provider' => $this->getName(),
                 'message' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -78,7 +82,7 @@ class GeminiProvider implements AIProviderInterface
      */
     public function isAvailable(): bool
     {
-        return !empty($this->apiKey);
+        return ! empty($this->apiKey);
     }
 
     /**

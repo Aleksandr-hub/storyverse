@@ -176,7 +176,7 @@ onMounted(async () => {
                   <span>{{ story.author.username }}</span>
                 </RouterLink>
                 <span>{{ story.view_count }} переглядів</span>
-                <span>{{ story.word_count.toLocaleString() }} слів</span>
+                <span>{{ (story.word_count ?? 0).toLocaleString() }} слів</span>
               </div>
             </div>
 
@@ -267,7 +267,7 @@ onMounted(async () => {
                   <span class="chapter-number">{{ chapter.chapter_number }}</span>
                   <div>
                     <h3 class="chapter-title">{{ chapter.title || `Глава ${chapter.chapter_number}` }}</h3>
-                    <p class="chapter-words">{{ chapter.word_count.toLocaleString() }} слів</p>
+                    <p class="chapter-words">{{ (chapter.word_count ?? 0).toLocaleString() }} слів</p>
                   </div>
                 </div>
                 <span class="chapter-arrow">→</span>

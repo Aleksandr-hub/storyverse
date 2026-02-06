@@ -62,8 +62,9 @@ const handleAvatarUpload = async (event: Event) => {
   try {
     const res = await uploadApi.upload(file, 'avatar')
     await authStore.updateProfile({ avatar_url: res.data.url })
-  } catch (err: any) {
-    avatarError.value = err.response?.data?.message || 'Помилка завантаження'
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { message?: string } } }
+    avatarError.value = error.response?.data?.message || 'Помилка завантаження'
   } finally {
     avatarUploading.value = false
     input.value = ''
@@ -263,7 +264,7 @@ const getStatusText = (status: string) => {
             </p>
             <div class="story-meta">
               <span>{{ story.chapters_count || 0 }} глав</span>
-              <span>{{ story.word_count.toLocaleString() }} слів</span>
+              <span>{{ (story.word_count ?? 0).toLocaleString() }} слів</span>
               <span>{{ story.view_count }} переглядів</span>
             </div>
           </RouterLink>

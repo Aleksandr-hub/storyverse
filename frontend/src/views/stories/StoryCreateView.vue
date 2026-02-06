@@ -7,7 +7,7 @@ import AppHeader from '@/components/layout/AppHeader.vue'
 
 const router = useRouter()
 const storiesStore = useStoriesStore()
-const { error, hasError, clearError, getFieldError, hasFieldError } = useErrorHandler()
+const { error, clearError, setError, getFieldError, hasFieldError } = useErrorHandler()
 const toast = useToast()
 
 const universes = computed(() => storiesStore.universes)
@@ -45,8 +45,7 @@ const handleSubmit = async () => {
     toast.success('Історію створено!')
     router.push(`/stories/${result.story.id}/edit`)
   } else {
-    error.value.message = result.message || 'Помилка створення історії'
-    error.value.fieldErrors = result.errors || {}
+    setError(result.message || 'Помилка створення історії', result.errors || {})
   }
 }
 

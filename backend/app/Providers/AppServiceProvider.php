@@ -64,7 +64,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('ai', function (Request $request) {
             $user = $request->user();
 
-            if (!$user) {
+            if (! $user) {
                 return Limit::perHour(0); // No AI for unauthenticated
             }
 

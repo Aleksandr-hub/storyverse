@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Log;
 class ClaudeService
 {
     private string $apiKey;
+
     private string $baseUrl = 'https://api.anthropic.com/v1';
+
     private string $model;
 
     public function __construct()
@@ -24,6 +26,7 @@ class ClaudeService
     {
         if (empty($this->apiKey)) {
             Log::warning('Claude API key is not configured');
+
             return null;
         }
 
@@ -43,6 +46,7 @@ class ClaudeService
 
             if ($response->successful()) {
                 $data = $response->json();
+
                 return $data['content'][0]['text'] ?? null;
             }
 
@@ -56,6 +60,7 @@ class ClaudeService
             Log::error('Claude API exception', [
                 'message' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -67,6 +72,7 @@ class ClaudeService
     {
         if (empty($this->apiKey)) {
             Log::warning('Claude API key is not configured');
+
             return null;
         }
 
@@ -84,6 +90,7 @@ class ClaudeService
 
             if ($response->successful()) {
                 $data = $response->json();
+
                 return $data['content'][0]['text'] ?? null;
             }
 
@@ -97,6 +104,7 @@ class ClaudeService
             Log::error('Claude API exception', [
                 'message' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -106,6 +114,6 @@ class ClaudeService
      */
     public function isConfigured(): bool
     {
-        return !empty($this->apiKey);
+        return ! empty($this->apiKey);
     }
 }

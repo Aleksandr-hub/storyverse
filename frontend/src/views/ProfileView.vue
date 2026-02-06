@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
-import { usersApi, storiesApi } from '@/services/api'
+import { usersApi } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import AppHeader from '@/components/layout/AppHeader.vue'
 
@@ -72,8 +72,9 @@ const loadProfile = async () => {
       lastPage: storiesRes.data.meta.last_page,
       total: storiesRes.data.meta.total,
     }
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Користувача не знайдено'
+  } catch (err: unknown) {
+    const e = err as { response?: { data?: { message?: string } } }
+    error.value = e.response?.data?.message || 'Користувача не знайдено'
   } finally {
     loading.value = false
   }
@@ -144,11 +145,11 @@ onMounted(loadProfile)
               <span class="stat-label">Історій</span>
             </div>
             <div class="stat">
-              <span class="stat-value">{{ user.stats.total_views.toLocaleString() }}</span>
+              <span class="stat-value">{{ (user.stats?.total_views ?? 0).toLocaleString() }}</span>
               <span class="stat-label">Переглядів</span>
             </div>
             <div class="stat">
-              <span class="stat-value">{{ user.stats.total_likes.toLocaleString() }}</span>
+              <span class="stat-value">{{ (user.stats?.total_likes ?? 0).toLocaleString() }}</span>
               <span class="stat-label">Вподобань</span>
             </div>
           </div>
@@ -189,7 +190,7 @@ onMounted(loadProfile)
               </div>
               <div class="story-meta">
                 <span>{{ story.chapters_count || 0 }} глав</span>
-                <span>{{ story.word_count.toLocaleString() }} слів</span>
+                <span>{{ (story.word_count ?? 0).toLocaleString() }} слів</span>
                 <span>{{ story.view_count }} 👁</span>
               </div>
             </RouterLink>

@@ -14,7 +14,7 @@ class StoryPolicyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->policy = new StoryPolicy();
+        $this->policy = new StoryPolicy;
     }
 
     public function test_view_allows_anyone_for_public_published_story(): void
@@ -152,7 +152,11 @@ class StoryPolicyTest extends TestCase
     private function createMockUser(string $id): User
     {
         $user = $this->createMock(User::class);
-        $user->id = $id;
+        $user->method('__get')->willReturnCallback(fn ($property) => match ($property) {
+            'id' => $id,
+            default => null,
+        });
+
         return $user;
     }
 
@@ -162,9 +166,13 @@ class StoryPolicyTest extends TestCase
         string $authorId = 'user-123'
     ): Story {
         $story = $this->createMock(Story::class);
-        $story->is_public = $isPublic;
-        $story->status = $status;
-        $story->author_id = $authorId;
+        $story->method('__get')->willReturnCallback(fn ($property) => match ($property) {
+            'is_public' => $isPublic,
+            'status' => $status,
+            'author_id' => $authorId,
+            default => null,
+        });
+
         return $story;
     }
 }

@@ -15,13 +15,17 @@ class StoryPolicy
      */
     public function view(?User $user, Story $story): bool
     {
-        // Public stories can be viewed by anyone
-        if ($story->is_public) {
+        // Owner can always view their own stories
+        if ($user && $user->id === $story->author_id) {
             return true;
         }
 
-        // Private stories - only owner can view
-        return $user && $user->id === $story->author_id;
+        // Public published stories can be viewed by anyone
+        if ($story->is_public && $story->status === 'published') {
+            return true;
+        }
+
+        return false;
     }
 
     /**

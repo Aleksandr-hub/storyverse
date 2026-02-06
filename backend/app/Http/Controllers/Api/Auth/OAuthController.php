@@ -23,9 +23,9 @@ class OAuthController extends Controller
      */
     public function redirect(string $provider): RedirectResponse|JsonResponse
     {
-        if (!in_array($provider, $this->providers)) {
+        if (! in_array($provider, $this->providers)) {
             return response()->json([
-                'message' => 'Непідтримуваний провайдер: ' . $provider,
+                'message' => 'Непідтримуваний провайдер: '.$provider,
             ], 400);
         }
 
@@ -39,9 +39,9 @@ class OAuthController extends Controller
      */
     public function callback(string $provider, Request $request): JsonResponse
     {
-        if (!in_array($provider, $this->providers)) {
+        if (! in_array($provider, $this->providers)) {
             return response()->json([
-                'message' => 'Непідтримуваний провайдер: ' . $provider,
+                'message' => 'Непідтримуваний провайдер: '.$provider,
             ], 400);
         }
 
@@ -64,7 +64,7 @@ class OAuthController extends Controller
             ->where('oauth_id', $socialUser->getId())
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             // Check if user with this email exists
             $user = User::where('email', $socialUser->getEmail())->first();
 
@@ -88,18 +88,18 @@ class OAuthController extends Controller
             }
         } else {
             // Update avatar if changed
-            if ($socialUser->getAvatar() && !$user->avatar_url) {
+            if ($socialUser->getAvatar() && ! $user->avatar_url) {
                 $user->update(['avatar_url' => $socialUser->getAvatar()]);
             }
         }
 
-        if (!$user->is_active) {
+        if (! $user->is_active) {
             return response()->json([
                 'message' => 'Ваш акаунт деактивовано.',
             ], 403);
         }
 
-        $token = $user->createToken('oauth-' . $provider)->plainTextToken;
+        $token = $user->createToken('oauth-'.$provider)->plainTextToken;
 
         return response()->json([
             'message' => 'Авторизація успішна.',
@@ -120,7 +120,7 @@ class OAuthController extends Controller
         $counter = 1;
 
         while (User::where('username', $username)->exists()) {
-            $username = $baseUsername . '_' . $counter;
+            $username = $baseUsername.'_'.$counter;
             $counter++;
         }
 

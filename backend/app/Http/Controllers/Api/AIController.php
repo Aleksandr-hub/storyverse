@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Story;
 use App\Models\Chapter;
 use App\Models\Illustration;
-use App\Services\AI\StoryAIService;
-use App\Services\AI\StableDiffusionService;
+use App\Models\Story;
 use App\Services\AI\Providers\OllamaProvider;
+use App\Services\AI\StableDiffusionService;
+use App\Services\AI\StoryAIService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -49,7 +49,7 @@ class AIController extends Controller
         ]);
 
         $chapter = null;
-        if (!empty($validated['chapter_id'])) {
+        if (! empty($validated['chapter_id'])) {
             $chapter = Chapter::find($validated['chapter_id']);
         }
 
@@ -87,7 +87,7 @@ class AIController extends Controller
         ]);
 
         $chapter = null;
-        if (!empty($validated['chapter_id'])) {
+        if (! empty($validated['chapter_id'])) {
             $chapter = Chapter::find($validated['chapter_id']);
         }
 
@@ -161,7 +161,7 @@ class AIController extends Controller
         // Parse titles into array
         $titles = array_filter(
             array_map('trim', explode("\n", $result)),
-            fn($line) => !empty($line)
+            fn ($line) => ! empty($line)
         );
 
         return response()->json([
@@ -226,7 +226,7 @@ class AIController extends Controller
             'sketch' => 'sketch, pencil drawing, line art, black and white, artistic',
         ];
 
-        $prompt = $stylePrompts[$style] . ', ' . $prompt;
+        $prompt = $stylePrompts[$style].', '.$prompt;
 
         $result = $this->imageService->generate(
             $prompt,
@@ -284,7 +284,7 @@ class AIController extends Controller
         }
 
         // Check story has adult rating
-        if (!in_array($story->rating, ['R', 'NC-17', '18+'])) {
+        if (! in_array($story->rating, ['R', 'NC-17', '18+'])) {
             return response()->json([
                 'message' => 'Цей режим доступний лише для історій з рейтингом 18+',
             ], 403);
@@ -296,7 +296,7 @@ class AIController extends Controller
         ]);
 
         $chapter = null;
-        if (!empty($validated['chapter_id'])) {
+        if (! empty($validated['chapter_id'])) {
             $chapter = Chapter::find($validated['chapter_id']);
         }
 
@@ -322,7 +322,7 @@ class AIController extends Controller
      */
     public function adultStatus(): JsonResponse
     {
-        $ollama = new OllamaProvider();
+        $ollama = new OllamaProvider;
 
         return response()->json([
             'available' => $ollama->isAvailable(),

@@ -6,8 +6,8 @@ use App\Http\Controllers\Api\Auth\LogoutController;
 use App\Http\Controllers\Api\Auth\MeController;
 use App\Http\Controllers\Api\Auth\OAuthController;
 use App\Http\Controllers\Api\Auth\RegisterController;
-use App\Http\Controllers\Api\CharacterController;
 use App\Http\Controllers\Api\ChapterController;
+use App\Http\Controllers\Api\CharacterController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\LikeController;
 use App\Http\Controllers\Api\StoryController;
@@ -119,4 +119,4 @@ Route::get('characters', [CharacterController::class, 'index']);
 Route::get('characters/{character}', [CharacterController::class, 'show']);
 
 // Health check
-Route::get('health', fn() => response()->json(['status' => 'ok', 'timestamp' => now()]));
+Route::get('health', fn () => response()->json(['status' => 'ok', 'timestamp' => now()]));

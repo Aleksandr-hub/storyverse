@@ -59,11 +59,14 @@ class StoryQueryService
 
     /**
      * Apply user-based filtering.
+     *
+     * @param  Builder<Story>  $query
      */
     private function applyUserFilter(Builder $query, Request $request): void
     {
-        if (!$request->has('user')) {
+        if (! $request->has('user')) {
             $query->published();
+
             return;
         }
 
@@ -112,7 +115,7 @@ class StoryQueryService
      */
     private function applySearchFilter(Builder $query, Request $request): void
     {
-        if (!$request->has('search')) {
+        if (! $request->has('search')) {
             return;
         }
 
@@ -137,7 +140,7 @@ class StoryQueryService
         $sortDirection = $request->string('direction', 'desc')->toString();
 
         // Validate sort field to prevent SQL injection
-        if (!in_array($sortField, $allowedSortFields, true)) {
+        if (! in_array($sortField, $allowedSortFields, true)) {
             $sortField = 'created_at';
         }
 

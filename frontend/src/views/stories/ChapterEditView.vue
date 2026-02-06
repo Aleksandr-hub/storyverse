@@ -35,7 +35,7 @@ const {
   isSaving: autoSaving,
   lastSavedAt,
   hasUnsavedChanges,
-  save: triggerSave,
+  save: _triggerSave,
   setInitialValue
 } = useAutoSave({
   data: form,
@@ -81,11 +81,12 @@ const continueWithAI = async () => {
     }
     aiPrompt.value = ''
     showAiPanel.value = false
-  } catch (err: any) {
-    if (err.response?.status === 429) {
+  } catch (err: unknown) {
+    const e = err as { response?: { status?: number; data?: { message?: string } } }
+    if (e.response?.status === 429) {
       aiError.value = 'Ліміт AI запитів вичерпано. Спробуйте пізніше.'
     } else {
-      aiError.value = err.response?.data?.message || 'Помилка AI сервісу'
+      aiError.value = e.response?.data?.message || 'Помилка AI сервісу'
     }
   } finally {
     aiLoading.value = false
@@ -104,11 +105,12 @@ const getAiSuggestions = async () => {
       chapter_id: chapter.value.id,
     })
     aiSuggestions.value = res.data.suggestions
-  } catch (err: any) {
-    if (err.response?.status === 429) {
+  } catch (err: unknown) {
+    const e = err as { response?: { status?: number; data?: { message?: string } } }
+    if (e.response?.status === 429) {
       aiError.value = 'Ліміт AI запитів вичерпано. Спробуйте пізніше.'
     } else {
-      aiError.value = err.response?.data?.message || 'Помилка AI сервісу'
+      aiError.value = e.response?.data?.message || 'Помилка AI сервісу'
     }
   } finally {
     aiLoading.value = false
@@ -147,13 +149,14 @@ const continueWithAdultAI = async () => {
     }
     aiPrompt.value = ''
     showAiPanel.value = false
-  } catch (err: any) {
-    if (err.response?.status === 503) {
+  } catch (err: unknown) {
+    const e = err as { response?: { status?: number; data?: { message?: string } } }
+    if (e.response?.status === 503) {
       aiError.value = 'Ollama не запущено. Запустіть: docker compose up ollama'
-    } else if (err.response?.status === 403) {
+    } else if (e.response?.status === 403) {
       aiError.value = 'Цей режим доступний лише для історій з рейтингом 18+'
     } else {
-      aiError.value = err.response?.data?.message || 'Помилка AI сервісу'
+      aiError.value = e.response?.data?.message || 'Помилка AI сервісу'
     }
   } finally {
     aiLoading.value = false
@@ -188,11 +191,12 @@ const generateImage = async () => {
       })
       imagePrompt.value = ''
     }
-  } catch (err: any) {
-    if (err.response?.status === 503) {
+  } catch (err: unknown) {
+    const e = err as { response?: { status?: number; data?: { message?: string } } }
+    if (e.response?.status === 503) {
       imageError.value = 'Stable Diffusion не запущено. Потрібна GPU.'
     } else {
-      imageError.value = err.response?.data?.message || 'Помилка генерації'
+      imageError.value = e.response?.data?.message || 'Помилка генерації'
     }
   } finally {
     imageLoading.value = false

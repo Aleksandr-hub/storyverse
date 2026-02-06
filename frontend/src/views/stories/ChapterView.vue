@@ -103,7 +103,7 @@ onMounted(async () => {
               <h1 class="chapter-title">
                 {{ chapter.title || `Глава ${chapter.chapter_number}` }}
               </h1>
-              <p class="chapter-words">{{ chapter.word_count.toLocaleString() }} слів</p>
+              <p class="chapter-words">{{ (chapter.word_count ?? 0).toLocaleString() }} слів</p>
             </div>
           </div>
 

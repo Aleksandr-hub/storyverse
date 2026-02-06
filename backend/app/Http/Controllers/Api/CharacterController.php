@@ -29,7 +29,7 @@ class CharacterController extends Controller
 
         // Search by name
         if ($request->has('search')) {
-            $query->where('name', 'ilike', '%' . $request->search . '%');
+            $query->where('name', 'ilike', '%'.$request->search.'%');
         }
 
         // Filter by creator (my characters)

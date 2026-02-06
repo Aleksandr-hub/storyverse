@@ -20,7 +20,7 @@ onMounted(async () => {
       const user = JSON.parse(decodeURIComponent(userJson))
       await authStore.handleOAuthCallback(token, user)
       router.push('/dashboard')
-    } catch (e) {
+    } catch {
       error.value = 'Помилка обробки даних авторизації'
       loading.value = false
     }

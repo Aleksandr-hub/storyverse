@@ -15,7 +15,9 @@ use Illuminate\Support\Facades\Log;
 class OllamaProvider implements AIProviderInterface
 {
     private string $baseUrl;
+
     private string $model;
+
     private int $timeout;
 
     public function __construct()
@@ -30,7 +32,7 @@ class OllamaProvider implements AIProviderInterface
      */
     public function chat(string $systemPrompt, string $userMessage, int $maxTokens = 1024): ?string
     {
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             return null;
         }
 
@@ -54,6 +56,7 @@ class OllamaProvider implements AIProviderInterface
 
             if ($response->successful()) {
                 $data = $response->json();
+
                 return $data['message']['content'] ?? null;
             }
 
@@ -69,6 +72,7 @@ class OllamaProvider implements AIProviderInterface
                 'provider' => $this->getName(),
                 'message' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -81,7 +85,7 @@ class OllamaProvider implements AIProviderInterface
         try {
             $response = Http::timeout(5)->get("{$this->baseUrl}/api/tags");
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 return false;
             }
 
@@ -94,7 +98,7 @@ class OllamaProvider implements AIProviderInterface
             }
 
             // Model not found but Ollama is running
-            Log::info("Ollama running but model '{$this->model}' not found. Available: " .
+            Log::info("Ollama running but model '{$this->model}' not found. Available: ".
                 implode(', ', array_column($models, 'name')));
 
             return false;
@@ -126,6 +130,7 @@ class OllamaProvider implements AIProviderInterface
     {
         try {
             $response = Http::timeout(5)->get("{$this->baseUrl}/api/tags");
+
             return $response->successful();
         } catch (\Exception $e) {
             return false;
@@ -167,6 +172,7 @@ class OllamaProvider implements AIProviderInterface
                 'model' => $modelName,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }

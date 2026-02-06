@@ -26,11 +26,11 @@ class UploadController extends Controller
 
         // Generate unique filename
         $extension = $file->getClientOriginalExtension();
-        $filename = Str::uuid() . '.' . $extension;
+        $filename = Str::uuid().'.'.$extension;
 
         // Determine path based on type
         $path = match ($type) {
-            'avatar' => 'avatars/' . $user->id,
+            'avatar' => 'avatars/'.$user->id,
             'cover' => 'covers',
             'illustration' => 'illustrations',
             default => 'uploads',
@@ -71,7 +71,7 @@ class UploadController extends Controller
             }
         }
 
-        if (!$isAllowed) {
+        if (! $isAllowed) {
             return response()->json([
                 'message' => 'Недозволений шлях',
             ], 403);

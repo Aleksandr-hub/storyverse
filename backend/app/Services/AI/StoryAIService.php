@@ -2,8 +2,8 @@
 
 namespace App\Services\AI;
 
-use App\Models\Story;
 use App\Models\Chapter;
+use App\Models\Story;
 
 class StoryAIService
 {
@@ -20,8 +20,8 @@ class StoryAIService
         $context = $this->buildContext($story, $chapter);
 
         $message = $context;
-        if (!empty($userPrompt)) {
-            $message .= "\n\nІНСТРУКЦІЯ АВТОРА: " . $userPrompt;
+        if (! empty($userPrompt)) {
+            $message .= "\n\nІНСТРУКЦІЯ АВТОРА: ".$userPrompt;
         }
         $message .= "\n\nПродовж історію. Напиши наступні 2-3 абзаци.";
 
@@ -52,7 +52,7 @@ class StoryAIService
 
         $message = "ТЕКСТ ДЛЯ РЕДАГУВАННЯ:\n{$text}\n\n";
         $message .= "ІНСТРУКЦІЯ: {$instruction}\n\n";
-        $message .= "Поверни відредагований текст без додаткових коментарів.";
+        $message .= 'Поверни відредагований текст без додаткових коментарів.';
 
         return $this->ai->chat($systemPrompt, $message, 2000);
     }
@@ -67,7 +67,7 @@ class StoryAIService
 
         $message = $context;
         $message .= "\n\nЗапропонуй 5 варіантів назви для цієї історії. ";
-        $message .= "Формат - кожна назва з нового рядка, без нумерації.";
+        $message .= 'Формат - кожна назва з нового рядка, без нумерації.';
 
         return $this->ai->chat($systemPrompt, $message, 200);
     }
@@ -82,7 +82,7 @@ class StoryAIService
 
         $message = $context;
         $message .= "\n\nНапиши короткий опис (анотацію) для цієї історії. ";
-        $message .= "2-3 речення, які зацікавлять читача, без спойлерів.";
+        $message .= '2-3 речення, які зацікавлять читача, без спойлерів.';
 
         return $this->ai->chat($systemPrompt, $message, 300);
     }
@@ -90,8 +90,8 @@ class StoryAIService
     /**
      * Build the system prompt with universe and character context.
      *
-     * @param Story $story The story context
-     * @param bool $isAdult Whether to build adult content prompt (18+, uncensored)
+     * @param  Story  $story  The story context
+     * @param  bool  $isAdult  Whether to build adult content prompt (18+, uncensored)
      */
     private function buildSystemPrompt(Story $story, bool $isAdult = false): string
     {
@@ -132,7 +132,7 @@ class StoryAIService
     {
         $story->loadMissing(['universe']);
 
-        if (!$story->universe) {
+        if (! $story->universe) {
             return '';
         }
 
@@ -143,11 +143,11 @@ class StoryAIService
             $section .= "Опис: {$story->universe->description}\n";
         }
 
-        if (!$isAdult) {
+        if (! $isAdult) {
             $section .= "Дотримуйся канону цього всесвіту.\n";
         }
 
-        return $section . "\n";
+        return $section."\n";
     }
 
     /**
@@ -177,7 +177,7 @@ class StoryAIService
             $section .= "\n";
         }
 
-        return $section . "\n";
+        return $section."\n";
     }
 
     /**
@@ -192,7 +192,7 @@ class StoryAIService
             $section .= "Опис: {$story->description}\n";
         }
 
-        $section .= "Рейтинг: " . ($isAdult ? '18+ (без цензури)' : $story->rating) . "\n";
+        $section .= 'Рейтинг: '.($isAdult ? '18+ (без цензури)' : $story->rating)."\n";
 
         return $section;
     }
@@ -234,7 +234,7 @@ class StoryAIService
             foreach ($recentChapters->reverse() as $ch) {
                 if ($ch->content) {
                     $context .= "[{$ch->title}]\n";
-                    $context .= $this->truncateText($ch->content, 1000) . "\n\n";
+                    $context .= $this->truncateText($ch->content, 1000)."\n\n";
                 }
             }
         }
@@ -264,7 +264,7 @@ class StoryAIService
             $text = mb_substr($text, $sentenceStart + 2);
         }
 
-        return '...' . $text;
+        return '...'.$text;
     }
 
     /**
@@ -276,11 +276,11 @@ class StoryAIService
         $context = $this->buildContext($story, $chapter);
 
         $message = $context;
-        if (!empty($userPrompt)) {
-            $message .= "\n\nІНСТРУКЦІЯ АВТОРА: " . $userPrompt;
+        if (! empty($userPrompt)) {
+            $message .= "\n\nІНСТРУКЦІЯ АВТОРА: ".$userPrompt;
         }
         $message .= "\n\nПродовж історію. Напиши наступні 2-3 абзаци. ";
-        $message .= "Не обмежуй себе, пиши відверто та емоційно.";
+        $message .= 'Не обмежуй себе, пиши відверто та емоційно.';
 
         return $this->ai->chatAdult($systemPrompt, $message, 2000);
     }

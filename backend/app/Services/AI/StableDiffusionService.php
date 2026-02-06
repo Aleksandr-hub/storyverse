@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 class StableDiffusionService
 {
     private string $baseUrl;
+
     private int $timeout;
 
     public function __construct()
@@ -27,12 +28,12 @@ class StableDiffusionService
     /**
      * Generate image from text prompt.
      *
-     * @param string $prompt The image description
-     * @param string $negativePrompt What to avoid in the image
-     * @param int $width Image width (default 512)
-     * @param int $height Image height (default 512)
-     * @param int $steps Number of sampling steps (more = better quality but slower)
-     * @param float $cfgScale How closely to follow the prompt (7-12 is typical)
+     * @param  string  $prompt  The image description
+     * @param  string  $negativePrompt  What to avoid in the image
+     * @param  int  $width  Image width (default 512)
+     * @param  int  $height  Image height (default 512)
+     * @param  int  $steps  Number of sampling steps (more = better quality but slower)
+     * @param  float  $cfgScale  How closely to follow the prompt (7-12 is typical)
      * @return array|null Returns ['url' => 'path/to/image.png', 'base64' => '...'] or null on failure
      */
     public function generate(
@@ -43,8 +44,9 @@ class StableDiffusionService
         int $steps = 30,
         float $cfgScale = 7.5
     ): ?array {
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             Log::warning('Stable Diffusion service is not available');
+
             return null;
         }
 
@@ -73,13 +75,14 @@ class StableDiffusionService
                 $data = $response->json();
                 $imageBase64 = $data['images'][0] ?? null;
 
-                if (!$imageBase64) {
+                if (! $imageBase64) {
                     Log::warning('Stable Diffusion returned no images');
+
                     return null;
                 }
 
                 // Save image to storage
-                $filename = 'illustrations/' . Str::uuid() . '.png';
+                $filename = 'illustrations/'.Str::uuid().'.png';
                 $imageData = base64_decode($imageBase64);
                 Storage::disk('public')->put($filename, $imageData);
 
@@ -100,6 +103,7 @@ class StableDiffusionService
             Log::error('Stable Diffusion exception', [
                 'message' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -107,10 +111,9 @@ class StableDiffusionService
     /**
      * Generate image variations/improvements using img2img.
      *
-     * @param string $prompt The image description
-     * @param string $imageBase64 Base64 encoded source image
-     * @param float $denoisingStrength How much to change (0=no change, 1=complete redraw)
-     * @return array|null
+     * @param  string  $prompt  The image description
+     * @param  string  $imageBase64  Base64 encoded source image
+     * @param  float  $denoisingStrength  How much to change (0=no change, 1=complete redraw)
      */
     public function generateVariation(
         string $prompt,
@@ -118,7 +121,7 @@ class StableDiffusionService
         float $denoisingStrength = 0.5,
         string $negativePrompt = ''
     ): ?array {
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             return null;
         }
 
@@ -144,11 +147,11 @@ class StableDiffusionService
                 $data = $response->json();
                 $imageBase64Result = $data['images'][0] ?? null;
 
-                if (!$imageBase64Result) {
+                if (! $imageBase64Result) {
                     return null;
                 }
 
-                $filename = 'illustrations/' . Str::uuid() . '.png';
+                $filename = 'illustrations/'.Str::uuid().'.png';
                 $imageData = base64_decode($imageBase64Result);
                 Storage::disk('public')->put($filename, $imageData);
 
@@ -164,6 +167,7 @@ class StableDiffusionService
             Log::error('Stable Diffusion img2img exception', [
                 'message' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -175,6 +179,7 @@ class StableDiffusionService
     {
         try {
             $response = Http::timeout(5)->get("{$this->baseUrl}/sdapi/v1/sd-models");
+
             return $response->successful();
         } catch (\Exception $e) {
             return false;
@@ -238,6 +243,7 @@ class StableDiffusionService
                 'model' => $modelName,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -267,6 +273,7 @@ class StableDiffusionService
     {
         try {
             $response = Http::timeout(5)->post("{$this->baseUrl}/sdapi/v1/interrupt");
+
             return $response->successful();
         } catch (\Exception $e) {
             return false;

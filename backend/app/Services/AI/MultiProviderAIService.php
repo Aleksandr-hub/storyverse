@@ -3,11 +3,11 @@
 namespace App\Services\AI;
 
 use App\Services\AI\Providers\ClaudeProvider;
-use App\Services\AI\Providers\OpenAIProvider;
 use App\Services\AI\Providers\GeminiProvider;
 use App\Services\AI\Providers\OllamaProvider;
-use Illuminate\Support\Facades\Log;
+use App\Services\AI\Providers\OpenAIProvider;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class MultiProviderAIService
 {
@@ -21,10 +21,10 @@ class MultiProviderAIService
     {
         // Initialize all providers
         $this->providers = [
-            'gemini' => new GeminiProvider(),
-            'claude' => new ClaudeProvider(),
-            'openai' => new OpenAIProvider(),
-            'ollama' => new OllamaProvider(),
+            'gemini' => new GeminiProvider,
+            'claude' => new ClaudeProvider,
+            'openai' => new OpenAIProvider,
+            'ollama' => new OllamaProvider,
         ];
 
         // Default priority: Gemini first (free tier), then Claude, then OpenAI
@@ -41,13 +41,13 @@ class MultiProviderAIService
         $errors = [];
 
         foreach ($adultPriority as $providerName) {
-            if (!isset($this->providers[$providerName])) {
+            if (! isset($this->providers[$providerName])) {
                 continue;
             }
 
             $provider = $this->providers[$providerName];
 
-            if (!$provider->isAvailable()) {
+            if (! $provider->isAvailable()) {
                 continue;
             }
 
@@ -62,6 +62,7 @@ class MultiProviderAIService
             if ($result !== null) {
                 Log::info("Successfully used adult provider: {$provider->getName()}");
                 $this->resetProviderErrors($provider->getName());
+
                 return $result;
             }
 
@@ -70,6 +71,7 @@ class MultiProviderAIService
         }
 
         Log::error('All adult AI providers failed', ['tried' => $errors]);
+
         return null;
     }
 
@@ -81,13 +83,14 @@ class MultiProviderAIService
         $errors = [];
 
         foreach ($this->getOrderedProviders() as $provider) {
-            if (!$provider->isAvailable()) {
+            if (! $provider->isAvailable()) {
                 continue;
             }
 
             // Check if provider is temporarily disabled due to errors
             if ($this->isProviderDisabled($provider->getName())) {
                 Log::debug("Provider {$provider->getName()} is temporarily disabled");
+
                 continue;
             }
 
@@ -99,6 +102,7 @@ class MultiProviderAIService
                 Log::info("Successfully used provider: {$provider->getName()}");
                 // Reset error count on success
                 $this->resetProviderErrors($provider->getName());
+
                 return $result;
             }
 
@@ -109,6 +113,7 @@ class MultiProviderAIService
         }
 
         Log::error('All AI providers failed', ['tried' => $errors]);
+
         return null;
     }
 
@@ -129,7 +134,7 @@ class MultiProviderAIService
 
         // Add any providers not in priority list
         foreach ($this->providers as $name => $provider) {
-            if (!in_array($name, $this->priorityOrder)) {
+            if (! in_array($name, $this->priorityOrder)) {
                 $ordered[] = $provider;
             }
         }
@@ -143,6 +148,7 @@ class MultiProviderAIService
     private function isProviderDisabled(string $providerName): bool
     {
         $errorCount = Cache::get("ai_provider_errors:{$providerName}", 0);
+
         // Disable provider after 3 consecutive errors for 5 minutes
         return $errorCount >= 3;
     }
@@ -192,7 +198,7 @@ class MultiProviderAIService
         $available = [];
 
         foreach ($this->getOrderedProviders() as $provider) {
-            if ($provider->isAvailable() && !$this->isProviderDisabled($provider->getName())) {
+            if ($provider->isAvailable() && ! $this->isProviderDisabled($provider->getName())) {
                 $available[] = $provider->getName();
             }
         }
@@ -214,6 +220,7 @@ class MultiProviderAIService
     public function getPrimaryProvider(): ?string
     {
         $available = $this->getAvailableProviders();
+
         return $available[0] ?? null;
     }
 
@@ -222,15 +229,17 @@ class MultiProviderAIService
      */
     public function chatWithProvider(string $providerName, string $systemPrompt, string $userMessage, int $maxTokens = 1024): ?string
     {
-        if (!isset($this->providers[$providerName])) {
+        if (! isset($this->providers[$providerName])) {
             Log::error("Unknown provider: {$providerName}");
+
             return null;
         }
 
         $provider = $this->providers[$providerName];
 
-        if (!$provider->isAvailable()) {
+        if (! $provider->isAvailable()) {
             Log::error("Provider {$providerName} is not available");
+
             return null;
         }
 
