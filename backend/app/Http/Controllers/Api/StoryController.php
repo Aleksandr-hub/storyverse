@@ -49,8 +49,11 @@ class StoryController extends Controller
 
     public function show(Request $request, Story $story): JsonResponse
     {
-        // Use Gate::forUser for optional auth (public routes may not have authenticated user)
-        if (! Gate::forUser($request->user())->allows('view', $story)) {
+        // Manually resolve user from Sanctum guard (works without auth middleware)
+        $user = auth('sanctum')->user();
+
+        // Use Gate::forUser for optional auth
+        if (! Gate::forUser($user)->allows('view', $story)) {
             abort(403, 'Ви не маєте доступу до цієї історії');
         }
 
@@ -62,7 +65,7 @@ class StoryController extends Controller
             'characters:id,name,avatar_url',
         ]);
 
-        if ($request->user()?->id !== $story->author_id) {
+        if ($user?->id !== $story->author_id) {
             $story->increment('view_count');
         }
 

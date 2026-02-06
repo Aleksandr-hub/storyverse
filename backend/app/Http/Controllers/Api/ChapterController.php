@@ -17,8 +17,10 @@ class ChapterController extends Controller
 {
     public function index(Request $request, Story $story): AnonymousResourceCollection|JsonResponse
     {
-        // Use Gate::forUser for optional auth
-        if (! Gate::forUser($request->user())->allows('view', $story)) {
+        // Manually resolve user from Sanctum guard (works without auth middleware)
+        $user = auth('sanctum')->user();
+
+        if (! Gate::forUser($user)->allows('view', $story)) {
             abort(403, 'Ви не маєте доступу до глав цієї історії');
         }
 
@@ -53,8 +55,10 @@ class ChapterController extends Controller
             abort(404, 'Главу не знайдено');
         }
 
-        // Use Gate::forUser for optional auth
-        if (! Gate::forUser($request->user())->allows('view', $chapter)) {
+        // Manually resolve user from Sanctum guard (works without auth middleware)
+        $user = auth('sanctum')->user();
+
+        if (! Gate::forUser($user)->allows('view', $chapter)) {
             abort(403, 'Ви не маєте доступу до цієї глави');
         }
 
