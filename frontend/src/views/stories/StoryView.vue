@@ -10,12 +10,34 @@ interface Comment {
   id: string
   content: string
   created_at: string
+  updated_at?: string
   user: {
     id: string
     username: string
     avatar_url: string | null
   }
   replies?: Comment[]
+}
+
+// Relative time formatting
+const formatRelativeTime = (dateStr: string): string => {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMins < 1) return 'щойно'
+  if (diffMins < 60) return `${diffMins} хв тому`
+  if (diffHours < 24) return `${diffHours} год тому`
+  if (diffDays < 7) return `${diffDays} дн тому`
+
+  return date.toLocaleDateString('uk-UA', {
+    day: 'numeric',
+    month: 'short',
+    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+  })
 }
 
 const route = useRoute()
@@ -39,6 +61,16 @@ const comments = ref<Comment[]>([])
 const commentsLoading = ref(false)
 const newComment = ref('')
 const submittingComment = ref(false)
+
+// Reply state
+const replyingTo = ref<string | null>(null)
+const replyContent = ref('')
+const submittingReply = ref(false)
+
+// Edit state
+const editingComment = ref<string | null>(null)
+const editContent = ref('')
+const submittingEdit = ref(false)
 
 const toggleLike = async () => {
   if (!isAuthenticated.value || !story.value) return
@@ -104,26 +136,102 @@ const submitComment = async () => {
   }
 }
 
-const deleteComment = async (commentId: string) => {
+const deleteComment = async (commentId: string, parentId?: string) => {
   if (!confirm('Видалити цей коментар?')) return
 
   try {
     await commentsApi.delete(commentId)
-    comments.value = comments.value.filter(c => c.id !== commentId)
+    if (parentId) {
+      // Delete reply from parent's replies array
+      const parent = comments.value.find(c => c.id === parentId)
+      if (parent?.replies) {
+        parent.replies = parent.replies.filter(r => r.id !== commentId)
+      }
+    } else {
+      // Delete top-level comment
+      comments.value = comments.value.filter(c => c.id !== commentId)
+    }
   } catch (err) {
     console.error('Comment delete error:', err)
   }
 }
 
-const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('uk-UA', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+// Reply functions
+const startReply = (commentId: string) => {
+  replyingTo.value = commentId
+  replyContent.value = ''
+  editingComment.value = null // Close any edit form
+}
+
+const cancelReply = () => {
+  replyingTo.value = null
+  replyContent.value = ''
+}
+
+const submitReply = async (parentId: string) => {
+  if (!story.value || !replyContent.value.trim()) return
+
+  submittingReply.value = true
+  try {
+    const res = await commentsApi.create(story.value.id, {
+      content: replyContent.value.trim(),
+      parent_id: parentId,
+    })
+    // Add reply to parent comment
+    const parent = comments.value.find(c => c.id === parentId)
+    if (parent) {
+      if (!parent.replies) parent.replies = []
+      parent.replies.push(res.data.comment)
+    }
+    cancelReply()
+  } catch (err) {
+    console.error('Reply submit error:', err)
+  } finally {
+    submittingReply.value = false
+  }
+}
+
+// Edit functions
+const startEdit = (comment: Comment) => {
+  editingComment.value = comment.id
+  editContent.value = comment.content
+  replyingTo.value = null // Close any reply form
+}
+
+const cancelEdit = () => {
+  editingComment.value = null
+  editContent.value = ''
+}
+
+const submitEdit = async (commentId: string, parentId?: string) => {
+  if (!editContent.value.trim()) return
+
+  submittingEdit.value = true
+  try {
+    const res = await commentsApi.update(commentId, {
+      content: editContent.value.trim(),
+    })
+    // Update comment in list
+    if (parentId) {
+      const parent = comments.value.find(c => c.id === parentId)
+      if (parent?.replies) {
+        const idx = parent.replies.findIndex(r => r.id === commentId)
+        if (idx !== -1) parent.replies[idx] = res.data.comment
+      }
+    } else {
+      const idx = comments.value.findIndex(c => c.id === commentId)
+      const existingComment = comments.value[idx]
+      if (idx !== -1 && existingComment) {
+        const replies = existingComment.replies
+        comments.value[idx] = { ...res.data.comment, replies }
+      }
+    }
+    cancelEdit()
+  } catch (err) {
+    console.error('Edit submit error:', err)
+  } finally {
+    submittingEdit.value = false
+  }
 }
 
 onMounted(async () => {
@@ -320,17 +428,130 @@ onMounted(async () => {
                   <RouterLink :to="`/users/${comment.user.id}`" class="comment-author">
                     {{ comment.user.username }}
                   </RouterLink>
-                  <span class="comment-date">{{ formatDate(comment.created_at) }}</span>
+                  <span class="comment-date">{{ formatRelativeTime(comment.created_at) }}</span>
+                  <span v-if="comment.updated_at && comment.updated_at !== comment.created_at" class="comment-edited">(ред.)</span>
+                </div>
+
+                <!-- Edit form or content -->
+                <div v-if="editingComment === comment.id" class="edit-form">
+                  <textarea
+                    v-model="editContent"
+                    class="edit-input"
+                    rows="3"
+                  ></textarea>
+                  <div class="edit-actions">
+                    <button @click="cancelEdit" class="btn-cancel">Скасувати</button>
+                    <button
+                      @click="submitEdit(comment.id)"
+                      :disabled="!editContent.trim() || submittingEdit"
+                      class="btn-save"
+                    >
+                      {{ submittingEdit ? 'Збереження...' : 'Зберегти' }}
+                    </button>
+                  </div>
+                </div>
+                <p v-else class="comment-text">{{ comment.content }}</p>
+
+                <!-- Comment actions -->
+                <div class="comment-actions">
+                  <button
+                    v-if="isAuthenticated"
+                    @click="startReply(comment.id)"
+                    class="btn-action"
+                  >
+                    Відповісти
+                  </button>
+                  <button
+                    v-if="currentUser?.id === comment.user.id"
+                    @click="startEdit(comment)"
+                    class="btn-action"
+                  >
+                    Редагувати
+                  </button>
                   <button
                     v-if="currentUser?.id === comment.user.id"
                     @click="deleteComment(comment.id)"
-                    class="comment-delete"
-                    title="Видалити коментар"
+                    class="btn-action btn-action-delete"
                   >
-                    🗑
+                    Видалити
                   </button>
                 </div>
-                <p class="comment-text">{{ comment.content }}</p>
+
+                <!-- Reply form -->
+                <div v-if="replyingTo === comment.id" class="reply-form">
+                  <textarea
+                    v-model="replyContent"
+                    placeholder="Напишіть відповідь..."
+                    class="reply-input"
+                    rows="2"
+                  ></textarea>
+                  <div class="reply-actions">
+                    <button @click="cancelReply" class="btn-cancel">Скасувати</button>
+                    <button
+                      @click="submitReply(comment.id)"
+                      :disabled="!replyContent.trim() || submittingReply"
+                      class="btn-reply"
+                    >
+                      {{ submittingReply ? 'Надсилання...' : 'Відповісти' }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Replies -->
+                <div v-if="comment.replies && comment.replies.length > 0" class="replies">
+                  <div v-for="reply in comment.replies" :key="reply.id" class="reply">
+                    <RouterLink :to="`/users/${reply.user.id}`" class="reply-avatar-link">
+                      <div class="reply-avatar">{{ reply.user.username.charAt(0).toUpperCase() }}</div>
+                    </RouterLink>
+                    <div class="reply-body">
+                      <div class="reply-header">
+                        <RouterLink :to="`/users/${reply.user.id}`" class="reply-author">
+                          {{ reply.user.username }}
+                        </RouterLink>
+                        <span class="reply-date">{{ formatRelativeTime(reply.created_at) }}</span>
+                        <span v-if="reply.updated_at && reply.updated_at !== reply.created_at" class="comment-edited">(ред.)</span>
+                      </div>
+
+                      <!-- Edit form or content for reply -->
+                      <div v-if="editingComment === reply.id" class="edit-form">
+                        <textarea
+                          v-model="editContent"
+                          class="edit-input"
+                          rows="2"
+                        ></textarea>
+                        <div class="edit-actions">
+                          <button @click="cancelEdit" class="btn-cancel">Скасувати</button>
+                          <button
+                            @click="submitEdit(reply.id, comment.id)"
+                            :disabled="!editContent.trim() || submittingEdit"
+                            class="btn-save"
+                          >
+                            {{ submittingEdit ? 'Збереження...' : 'Зберегти' }}
+                          </button>
+                        </div>
+                      </div>
+                      <p v-else class="reply-text">{{ reply.content }}</p>
+
+                      <!-- Reply actions -->
+                      <div class="comment-actions">
+                        <button
+                          v-if="currentUser?.id === reply.user.id"
+                          @click="startEdit(reply)"
+                          class="btn-action"
+                        >
+                          Редагувати
+                        </button>
+                        <button
+                          v-if="currentUser?.id === reply.user.id"
+                          @click="deleteComment(reply.id, comment.id)"
+                          class="btn-action btn-action-delete"
+                        >
+                          Видалити
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -813,6 +1034,164 @@ onMounted(async () => {
 .comment-text {
   color: #374151;
   line-height: 1.5;
+}
+
+.comment-edited {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Comment actions */
+.comment-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.btn-action {
+  font-size: 0.75rem;
+  color: #6b7280;
+  transition: color 0.2s;
+}
+
+.btn-action:hover {
+  color: #4f46e5;
+}
+
+.btn-action-delete:hover {
+  color: #dc2626;
+}
+
+/* Reply form */
+.reply-form,
+.edit-form {
+  margin-top: 12px;
+}
+
+.reply-input,
+.edit-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  resize: none;
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.reply-input:focus,
+.edit-input:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.reply-actions,
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+
+.btn-cancel {
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  color: #6b7280;
+  background: #f3f4f6;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.btn-reply,
+.btn-save {
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  color: #fff;
+  background: #4f46e5;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.btn-reply:hover:not(:disabled),
+.btn-save:hover:not(:disabled) {
+  background: #4338ca;
+}
+
+.btn-reply:disabled,
+.btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Replies (nested comments) */
+.replies {
+  margin-top: 16px;
+  padding-left: 20px;
+  border-left: 2px solid #e5e7eb;
+}
+
+.reply {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.reply:last-child {
+  margin-bottom: 0;
+}
+
+.reply-avatar-link {
+  flex-shrink: 0;
+}
+
+.reply-avatar {
+  width: 32px;
+  height: 32px;
+  background: #f3f4f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.reply-body {
+  flex: 1;
+}
+
+.reply-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.reply-author {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+.reply-author:hover {
+  color: #4f46e5;
+}
+
+.reply-date {
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+.reply-text {
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.4;
 }
 
 @media (max-width: 640px) {
