@@ -11,6 +11,7 @@ use App\Services\Story\StoryQueryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 
 class StoryController extends Controller
@@ -48,7 +49,10 @@ class StoryController extends Controller
 
     public function show(Request $request, Story $story): JsonResponse
     {
-        $this->authorize('view', $story);
+        // Use Gate::forUser for optional auth (public routes may not have authenticated user)
+        if (! Gate::forUser($request->user())->allows('view', $story)) {
+            abort(403, 'Ви не маєте доступу до цієї історії');
+        }
 
         $story->load([
             'author:id,username,avatar_url,bio',

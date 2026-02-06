@@ -236,6 +236,10 @@ defineExpose({
   border-radius: 8px;
   overflow: hidden;
   background: #fff;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .tiptap-editor.disabled {
@@ -309,6 +313,10 @@ defineExpose({
 /* Editor Content */
 .editor-content {
   padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
 }
 
 .editor-content :deep(.ProseMirror) {
@@ -316,6 +324,8 @@ defineExpose({
   line-height: 1.75;
   color: #111827;
   font-size: 1rem;
+  flex: 1;
+  min-height: 400px;
 }
 
 .editor-content :deep(.ProseMirror p) {

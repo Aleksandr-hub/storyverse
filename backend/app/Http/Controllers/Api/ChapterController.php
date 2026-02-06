@@ -11,12 +11,16 @@ use App\Models\Story;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Gate;
 
 class ChapterController extends Controller
 {
     public function index(Request $request, Story $story): AnonymousResourceCollection|JsonResponse
     {
-        $this->authorize('view', $story);
+        // Use Gate::forUser for optional auth
+        if (! Gate::forUser($request->user())->allows('view', $story)) {
+            abort(403, 'Ви не маєте доступу до глав цієї історії');
+        }
 
         $chapters = $story->chapters()
             ->select(['id', 'story_id', 'title', 'chapter_number', 'word_count', 'created_at', 'updated_at'])
@@ -43,13 +47,16 @@ class ChapterController extends Controller
         ], 201);
     }
 
-    public function show(Story $story, Chapter $chapter): JsonResponse
+    public function show(Request $request, Story $story, Chapter $chapter): JsonResponse
     {
         if ($chapter->story_id !== $story->id) {
             abort(404, 'Главу не знайдено');
         }
 
-        $this->authorize('view', $chapter);
+        // Use Gate::forUser for optional auth
+        if (! Gate::forUser($request->user())->allows('view', $chapter)) {
+            abort(403, 'Ви не маєте доступу до цієї глави');
+        }
 
         $chapter->load('illustrations');
 
