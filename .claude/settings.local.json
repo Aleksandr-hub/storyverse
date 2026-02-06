@@ -10,7 +10,9 @@
       "Bash(lsof:*)",
       "Bash(curl:*)",
       "Bash(ls:*)",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(git add:*)"
     ]
   }
 }

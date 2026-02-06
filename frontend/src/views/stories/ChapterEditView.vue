@@ -4,6 +4,8 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useStoriesStore } from '@/stores/stories'
 import { aiApi } from '@/services/api'
 import AppHeader from '@/components/layout/AppHeader.vue'
+import TiptapEditor from '@/components/editor/TiptapEditor.vue'
+import { useAutoSave } from '@/composables'
 
 const route = useRoute()
 const router = useRouter()
@@ -23,15 +25,33 @@ const form = ref({
   content: '',
 })
 
-// Count words (supports Ukrainian/Cyrillic)
-const countWords = (text: string): number => {
-  if (!text) return 0
-  const cleaned = text.replace(/[*_~`#\[\]()>-]+/g, ' ')
-  const matches = cleaned.match(/[\p{L}\p{N}']+/gu)
-  return matches ? matches.length : 0
+// Auto-save functionality
+const performSave = async () => {
+  if (!chapter.value) return
+  await storiesStore.updateChapter(chapter.value.id, form.value)
 }
 
-const wordCount = computed(() => countWords(form.value.content))
+const {
+  isSaving: autoSaving,
+  lastSavedAt,
+  hasUnsavedChanges,
+  save: triggerSave,
+  setInitialValue
+} = useAutoSave({
+  data: form,
+  onSave: performSave,
+  interval: 30000 // 30 seconds
+})
+
+// Format last saved time
+const lastSavedText = computed(() => {
+  if (!lastSavedAt.value) return ''
+  const now = new Date()
+  const diff = Math.floor((now.getTime() - lastSavedAt.value.getTime()) / 1000)
+  if (diff < 60) return 'щойно збережено'
+  if (diff < 3600) return `збережено ${Math.floor(diff / 60)} хв тому`
+  return `збережено о ${lastSavedAt.value.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}`
+})
 
 // AI functionality
 const aiLoading = ref(false)
@@ -145,7 +165,7 @@ const showImagePanel = ref(false)
 const imageLoading = ref(false)
 const imageError = ref('')
 const imagePrompt = ref('')
-const imageStyle = ref('fantasy')
+const imageStyle = ref<'fantasy' | 'anime' | 'realistic' | 'sketch'>('fantasy')
 const generatedImages = ref<Array<{ url: string; prompt: string }>>([])
 
 const generateImage = async () => {
@@ -191,7 +211,7 @@ const save = async () => {
 
   const result = await storiesStore.updateChapter(chapter.value.id, form.value)
   if (result.success) {
-    // Update local state
+    setInitialValue() // Reset unsaved changes flag
   } else {
     alert(result.message || 'Помилка збереження')
   }
@@ -210,6 +230,8 @@ watch(chapter, (newChapter) => {
       title: newChapter.title || '',
       content: newChapter.content || '',
     }
+    // Reset auto-save initial value when chapter is loaded
+    setTimeout(() => setInitialValue(), 0)
   }
 }, { immediate: true })
 
@@ -418,13 +440,13 @@ onMounted(async () => {
           <div class="form-group content-group">
             <label class="form-label">Текст</label>
             <div class="editor-wrapper">
-              <textarea
+              <TiptapEditor
                 v-model="form.content"
-                rows="25"
-                class="text-editor"
-                placeholder="Почніть писати тут..."
                 :disabled="aiLoading"
-              ></textarea>
+                placeholder="Почніть писати тут..."
+                min-height="500px"
+                @save="save"
+              />
 
               <!-- AI Loading Overlay -->
               <div v-if="aiLoading" class="ai-loading-overlay">
@@ -439,8 +461,18 @@ onMounted(async () => {
 
           <!-- Footer -->
           <div class="editor-footer">
-            <span class="word-count">{{ wordCount.toLocaleString() }} слів</span>
-            <span v-if="loading" class="saving-indicator">Збереження...</span>
+            <div class="editor-footer-left">
+              <span v-if="hasUnsavedChanges" class="unsaved-indicator">
+                Є незбережені зміни
+              </span>
+              <span v-else-if="lastSavedText" class="saved-indicator">
+                {{ lastSavedText }}
+              </span>
+            </div>
+            <div class="editor-footer-right">
+              <span v-if="autoSaving" class="saving-indicator">Збереження...</span>
+              <span class="shortcut-hint">Ctrl+S для збереження</span>
+            </div>
           </div>
         </div>
       </div>
@@ -636,34 +668,6 @@ onMounted(async () => {
 .form-input:focus {
   border-color: #4f46e5;
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-}
-
-/* Text Editor */
-.text-editor {
-  flex: 1;
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 1rem;
-  line-height: 1.75;
-  color: #111827;
-  resize: none;
-  outline: none;
-  min-height: 500px;
-}
-
-.text-editor:focus {
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-}
-
-.text-editor::placeholder {
-  color: #9ca3af;
-}
-
-.text-editor:disabled {
-  background: #f9fafb;
 }
 
 /* Editor Wrapper */
@@ -1058,14 +1062,33 @@ onMounted(async () => {
   border-radius: 0 0 12px 12px;
 }
 
-.word-count {
+.editor-footer-left,
+.editor-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.unsaved-indicator {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #f59e0b;
+  font-weight: 500;
+}
+
+.saved-indicator {
+  font-size: 0.875rem;
+  color: #10b981;
 }
 
 .saving-indicator {
   font-size: 0.875rem;
   color: #4f46e5;
+  font-weight: 500;
+}
+
+.shortcut-hint {
+  font-size: 0.75rem;
+  color: #9ca3af;
 }
 
 @media (max-width: 640px) {
