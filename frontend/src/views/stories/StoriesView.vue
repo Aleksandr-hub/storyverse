@@ -245,9 +245,18 @@ onMounted(async () => {
               </div>
 
               <div class="story-footer">
-                <div class="story-author">
-                  <div class="author-avatar">{{ story.author?.username?.charAt(0).toUpperCase() }}</div>
-                  <span>{{ story.author?.username }}</span>
+                <RouterLink
+                  v-if="story.author"
+                  :to="`/users/${story.author.id}`"
+                  class="story-author"
+                  @click.stop
+                >
+                  <div class="author-avatar">{{ story.author.username?.charAt(0).toUpperCase() }}</div>
+                  <span>{{ story.author.username }}</span>
+                </RouterLink>
+                <div v-else class="story-author">
+                  <div class="author-avatar">?</div>
+                  <span>Невідомий</span>
                 </div>
                 <div class="story-stats">
                   <span>{{ story.chapters_count || 0 }} глав</span>
@@ -593,6 +602,11 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 8px;
+  transition: color 0.2s;
+}
+
+a.story-author:hover {
+  color: #4f46e5;
 }
 
 .author-avatar {
