@@ -88,6 +88,7 @@ export const storiesApi = {
   create: (data: {
     title: string
     description?: string
+    cover_url?: string
     universe_id?: string
     mode?: string
     is_public?: boolean
@@ -256,6 +257,12 @@ export const aiApi = {
 
   generateDescription: (storyId: string) =>
     api.post(`/ai/stories/${storyId}/description`),
+
+  // Cover generation (uses Stable Diffusion)
+  generateCover: (storyId: string, data: {
+    prompt: string
+    style?: 'anime' | 'realistic' | 'fantasy' | 'sketch'
+  }) => api.post(`/ai/stories/${storyId}/generate-cover`, data),
 
   // Adult content (uses Ollama - uncensored)
   continueWritingAdult: (storyId: string, data?: { chapter_id?: string; prompt?: string }) =>

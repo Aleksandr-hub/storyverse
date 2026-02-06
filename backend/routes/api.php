@@ -91,6 +91,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('adult-status', [AIController::class, 'adultStatus']);
 
         // Image generation (uses Stable Diffusion)
+        Route::post('stories/{story}/generate-cover', [AIController::class, 'generateCover']);
         Route::post('stories/{story}/illustrate', [AIController::class, 'generateIllustration']);
         Route::get('image-status', [AIController::class, 'imageStatus']);
     });

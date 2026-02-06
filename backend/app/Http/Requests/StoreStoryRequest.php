@@ -16,6 +16,7 @@ class StoreStoryRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:500'],
             'description' => ['nullable', 'string', 'max:5000'],
+            'cover_url' => ['nullable', 'url', 'max:500'],
             'universe_id' => ['nullable', 'uuid', 'exists:universes,id'],
             'mode' => ['sometimes', 'string', 'in:story,collaborative,adventure'],
             'is_public' => ['sometimes', 'boolean'],

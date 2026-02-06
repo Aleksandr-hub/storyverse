@@ -7,6 +7,7 @@ use App\Http\Requests\StoreStoryRequest;
 use App\Http\Requests\UpdateStoryRequest;
 use App\Http\Resources\StoryResource;
 use App\Models\Story;
+use App\Services\Story\StoryCoverService;
 use App\Services\Story\StoryQueryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,8 @@ use Illuminate\Support\Str;
 class StoryController extends Controller
 {
     public function __construct(
-        private readonly StoryQueryService $queryService
+        private readonly StoryQueryService $queryService,
+        private readonly StoryCoverService $coverService
     ) {}
 
     public function index(Request $request): AnonymousResourceCollection
@@ -84,6 +86,11 @@ class StoryController extends Controller
 
         if (isset($data['status']) && $data['status'] === 'published' && $story->status !== 'published') {
             $data['published_at'] = now();
+        }
+
+        // Handle cover cleanup when changing or removing cover
+        if (array_key_exists('cover_url', $data)) {
+            $this->coverService->handleCoverUpdate($story->cover_url, $data['cover_url']);
         }
 
         $story->update($data);

@@ -1099,6 +1099,7 @@ onMounted(async () => {
   .page-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
   }
 
   .header-left {
@@ -1109,7 +1110,28 @@ onMounted(async () => {
 
   .header-actions {
     width: 100%;
-    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .header-actions button {
+    padding: 0 10px;
+    font-size: 0.8rem;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-image,
+  .btn-ai {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .btn-secondary,
+  .btn-primary {
+    flex: 1;
   }
 }
 </style>

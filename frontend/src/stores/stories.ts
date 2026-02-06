@@ -195,6 +195,7 @@ export const useStoriesStore = defineStore('stories', () => {
   const createStory = async (data: {
     title: string
     description?: string
+    cover_url?: string
     universe_id?: string
     mode?: string
     is_public?: boolean

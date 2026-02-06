@@ -2,8 +2,8 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useStoriesStore } from '@/stores/stories'
-import { uploadApi } from '@/services/api'
 import AppHeader from '@/components/layout/AppHeader.vue'
+import ImageUpload from '@/components/ui/ImageUpload.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -22,44 +22,6 @@ const form = ref({
   rating: '0+',
   cover_url: '' as string | null,
 })
-
-const coverUploading = ref(false)
-const coverError = ref('')
-
-const handleCoverUpload = async (event: Event) => {
-  const input = event.target as HTMLInputElement
-  if (!input.files || !input.files[0]) return
-
-  const file = input.files[0]
-
-  if (file.size > 5 * 1024 * 1024) {
-    coverError.value = 'Файл занадто великий (макс. 5MB)'
-    return
-  }
-
-  if (!file.type.startsWith('image/')) {
-    coverError.value = 'Дозволені лише зображення'
-    return
-  }
-
-  coverError.value = ''
-  coverUploading.value = true
-
-  try {
-    const res = await uploadApi.upload(file, 'cover')
-    form.value.cover_url = res.data.url
-  } catch (err: unknown) {
-    const e = err as { response?: { data?: { message?: string } } }
-    coverError.value = e.response?.data?.message || 'Помилка завантаження'
-  } finally {
-    coverUploading.value = false
-    input.value = ''
-  }
-}
-
-const removeCover = () => {
-  form.value.cover_url = null
-}
 
 const ratingOptions = [
   { value: '0+', label: '0+ — Для всіх' },
@@ -295,27 +257,14 @@ onMounted(async () => {
 
               <div class="form-group">
                 <label class="form-label">Обкладинка</label>
-                <div class="cover-upload">
-                  <div v-if="form.cover_url" class="cover-preview">
-                    <img :src="form.cover_url" alt="Обкладинка" />
-                    <button @click="removeCover" class="cover-remove" title="Видалити">✕</button>
-                  </div>
-                  <label v-else class="cover-dropzone" :class="{ uploading: coverUploading }">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      @change="handleCoverUpload"
-                      :disabled="coverUploading"
-                      class="cover-input"
-                    />
-                    <span v-if="coverUploading" class="cover-text">Завантаження...</span>
-                    <span v-else class="cover-text">
-                      <span class="cover-icon">📷</span>
-                      Натисніть для вибору
-                    </span>
-                  </label>
-                  <p v-if="coverError" class="cover-error">{{ coverError }}</p>
-                </div>
+                <ImageUpload
+                  v-model="form.cover_url"
+                  type="cover"
+                  :story-id="story.id"
+                  enable-ai
+                  aspect-ratio="16/9"
+                  placeholder="Натисніть або перетягніть"
+                />
               </div>
 
               <div class="form-group">
@@ -701,91 +650,6 @@ onMounted(async () => {
 
 .form-select {
   cursor: pointer;
-}
-
-/* Cover */
-.cover-upload {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.cover-preview {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.cover-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.cover-remove {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 28px;
-  height: 28px;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  border-radius: 50%;
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-}
-
-.cover-remove:hover {
-  background: #dc2626;
-}
-
-.cover-dropzone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  border: 2px dashed #d1d5db;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.cover-dropzone:hover {
-  border-color: #4f46e5;
-  background: #f9fafb;
-}
-
-.cover-dropzone.uploading {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.cover-input {
-  display: none;
-}
-
-.cover-text {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.cover-icon {
-  font-size: 1.5rem;
-}
-
-.cover-error {
-  font-size: 0.75rem;
-  color: #dc2626;
 }
 
 /* Checkbox */

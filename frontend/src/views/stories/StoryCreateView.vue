@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useStoriesStore } from '@/stores/stories'
 import { useErrorHandler, useToast } from '@/composables'
 import AppHeader from '@/components/layout/AppHeader.vue'
+import ImageUpload from '@/components/ui/ImageUpload.vue'
 
 const router = useRouter()
 const storiesStore = useStoriesStore()
@@ -17,6 +18,7 @@ const loading = computed(() => storiesStore.loading)
 const form = ref({
   title: '',
   description: '',
+  cover_url: null as string | null,
   universe_id: '',
   mode: 'story',
   is_public: true,
@@ -37,6 +39,7 @@ const handleSubmit = async () => {
 
   const result = await storiesStore.createStory({
     ...form.value,
+    cover_url: form.value.cover_url || undefined,
     universe_id: form.value.universe_id || undefined,
     tags: form.value.tags.length > 0 ? form.value.tags : undefined,
   })
@@ -111,6 +114,19 @@ onMounted(async () => {
             placeholder="Коротко опишіть вашу історію..."
           ></textarea>
           <p v-if="getFieldError('description')" class="field-error">{{ getFieldError('description') }}</p>
+        </div>
+
+        <!-- Cover -->
+        <div class="form-group">
+          <label class="form-label">Обкладинка</label>
+          <ImageUpload
+            v-model="form.cover_url"
+            type="cover"
+            :enable-ai="false"
+            aspect-ratio="16/9"
+            placeholder="Завантажте обкладинку (опціонально)"
+          />
+          <p class="form-hint">AI генерація обкладинки буде доступна після створення історії</p>
         </div>
 
         <!-- Universe -->
@@ -303,6 +319,12 @@ onMounted(async () => {
 .field-error {
   color: #dc2626;
   font-size: 0.875rem;
+}
+
+.form-hint {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 4px;
 }
 
 /* Mode */

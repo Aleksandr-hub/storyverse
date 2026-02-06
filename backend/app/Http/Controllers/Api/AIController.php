@@ -195,6 +195,56 @@ class AIController extends Controller
     }
 
     /**
+     * Generate a cover image for a story using Stable Diffusion.
+     */
+    public function generateCover(Request $request, Story $story): JsonResponse
+    {
+        // Check ownership
+        if ($story->author_id !== $request->user()->id) {
+            return response()->json([
+                'message' => 'Ви не маєте доступу до цієї історії',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'prompt' => 'required|string|max:1000',
+            'style' => 'nullable|string|in:anime,realistic,fantasy,sketch',
+        ]);
+
+        $prompt = $validated['prompt'];
+        $style = $validated['style'] ?? 'fantasy';
+
+        $stylePrompts = [
+            'anime' => 'anime style, manga, japanese animation, vibrant colors, clean lines, book cover art',
+            'realistic' => 'photorealistic, detailed, 8k uhd, realistic lighting, professional book cover',
+            'fantasy' => 'fantasy art, digital painting, epic, dramatic lighting, detailed, book cover art',
+            'sketch' => 'sketch, pencil drawing, line art, artistic, book cover style',
+        ];
+
+        $enhancedPrompt = $stylePrompts[$style].', '.$prompt;
+
+        // Generate with cover-appropriate dimensions (taller for book covers)
+        $result = $this->imageService->generate(
+            $enhancedPrompt,
+            'blurry, low quality, watermark, text, logo, nsfw, nude',
+            512, // width
+            768  // height (3:4 ratio for book covers)
+        );
+
+        if ($result === null) {
+            return response()->json([
+                'message' => 'Сервіс генерації зображень недоступний. Переконайтесь, що Stable Diffusion запущено.',
+            ], 503);
+        }
+
+        return response()->json([
+            'url' => $result['url'],
+            'prompt' => $validated['prompt'],
+            'style' => $style,
+        ]);
+    }
+
+    /**
      * Generate illustration for a chapter using Stable Diffusion.
      */
     public function generateIllustration(Request $request, Story $story): JsonResponse
