@@ -176,10 +176,14 @@ services:
       - storyverse
 
   # Stable Diffusion WebUI - Local image generation (uncensored)
+  # Requires NVIDIA GPU - only works on Linux with NVIDIA drivers
+  # To enable: docker compose --profile gpu up -d
   stable-diffusion:
     image: ghcr.io/neggles/sd-webui-docker:latest
     container_name: storyverse-sd
     restart: unless-stopped
+    profiles:
+      - gpu
     volumes:
       - sd_models:/app/models
       - sd_outputs:/app/outputs
