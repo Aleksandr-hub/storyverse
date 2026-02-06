@@ -1,15 +1,40 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
+import { marked } from 'marked'
 import { useStoriesStore } from '@/stores/stories'
 import { useAuthStore } from '@/stores/auth'
 import { useMeta } from '@/composables/useMeta'
 import AppHeader from '@/components/layout/AppHeader.vue'
 
-// Sanitize HTML to prevent XSS (basic sanitization - content comes from our own editor)
-const sanitizeHtml = (html: string): string => {
-  if (!html) return ''
-  // Remove script tags and event handlers
+// Configure marked for safe output
+marked.setOptions({
+  breaks: true, // Convert \n to <br>
+  gfm: true,    // GitHub Flavored Markdown
+})
+
+// Check if content looks like markdown (has markdown patterns but no HTML tags)
+const isMarkdown = (content: string): boolean => {
+  if (!content) return false
+  // Has markdown patterns like **bold**, # heading, - list, etc.
+  const hasMarkdownPatterns = /(\*\*|__|##?|^[-*+]\s|^\d+\.\s|```|>\s)/m.test(content)
+  // Has minimal HTML (excluding simple <p> and <br> that might come from tiptap)
+  const hasRichHtml = /<(div|span|h[1-6]|strong|em|ul|ol|li|blockquote)[^>]*>/i.test(content)
+  return hasMarkdownPatterns && !hasRichHtml
+}
+
+// Process content: convert markdown to HTML if needed, then sanitize
+const processContent = (content: string): string => {
+  if (!content) return ''
+
+  let html = content
+
+  // If it looks like markdown, convert it
+  if (isMarkdown(content)) {
+    html = marked.parse(content) as string
+  }
+
+  // Sanitize to prevent XSS
   return html
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     .replace(/on\w+="[^"]*"/gi, '')
@@ -190,7 +215,7 @@ onUnmounted(() => {
             v-if="chapter.content"
             class="prose"
             :style="{ fontSize: fontSize + 'px', lineHeight: '1.8' }"
-            v-html="sanitizeHtml(chapter.content)"
+            v-html="processContent(chapter.content)"
           ></div>
 
           <div v-else class="empty-content">
