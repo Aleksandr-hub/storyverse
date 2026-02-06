@@ -29,6 +29,21 @@ const currentUser = computed(() => authStore.user)
 const isOwner = computed(() => story.value?.author?.id === currentUser.value?.id)
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 
+// Estimated reading time for entire story (average 200 words per minute for Ukrainian)
+const totalReadingTime = computed(() => {
+  const words = story.value?.word_count ?? 0
+  const minutes = Math.ceil(words / 200)
+  if (minutes < 1) return 'менше хвилини'
+  if (minutes === 1) return '1 хвилина'
+  if (minutes < 5) return `${minutes} хвилини`
+  if (minutes < 60) return `${minutes} хвилин`
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  if (hours === 1) return `${hours} година ${remainingMinutes} хв`
+  if (hours < 5) return `${hours} години ${remainingMinutes} хв`
+  return `${hours} годин ${remainingMinutes} хв`
+})
+
 // Likes
 const liked = ref(false)
 const likeCount = ref(0)
@@ -177,6 +192,7 @@ onMounted(async () => {
                 </RouterLink>
                 <span>{{ story.view_count }} переглядів</span>
                 <span>{{ (story.word_count ?? 0).toLocaleString() }} слів</span>
+                <span v-if="story.word_count > 0">~{{ totalReadingTime }} читання</span>
               </div>
             </div>
 
@@ -208,6 +224,15 @@ onMounted(async () => {
           <p v-if="story.description" class="story-description">
             {{ story.description }}
           </p>
+
+          <!-- Start Reading Button -->
+          <RouterLink
+            v-if="story.chapters && story.chapters.length > 0 && story.chapters[0]"
+            :to="`/stories/${story.id}/chapters/${story.chapters[0].id}`"
+            class="btn-start-reading"
+          >
+            📖 Почати читати
+          </RouterLink>
 
           <!-- Meta badges -->
           <div class="badges">
@@ -530,6 +555,26 @@ onMounted(async () => {
   color: #4b5563;
   margin-bottom: 16px;
   line-height: 1.6;
+}
+
+.btn-start-reading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.btn-start-reading:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
 }
 
 /* Badges */

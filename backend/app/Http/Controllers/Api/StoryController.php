@@ -50,6 +50,7 @@ class StoryController extends Controller
     public function show(Request $request, Story $story): JsonResponse
     {
         // Manually resolve user from Sanctum guard (works without auth middleware)
+        /** @var \App\Models\User|null $user */
         $user = auth('sanctum')->user();
 
         // Use Gate::forUser for optional auth

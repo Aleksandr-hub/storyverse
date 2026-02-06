@@ -29,6 +29,14 @@ export interface Tag {
   stories_count?: number
 }
 
+export interface Illustration {
+  id: string
+  image_url: string
+  prompt?: string | null
+  position: number
+  created_at: string
+}
+
 export interface Chapter {
   id: string
   story_id: string
@@ -39,6 +47,7 @@ export interface Chapter {
   is_ai_generated: boolean
   created_at: string
   updated_at: string
+  illustrations?: Illustration[]
 }
 
 export interface Story {

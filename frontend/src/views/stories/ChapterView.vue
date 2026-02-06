@@ -1,21 +1,18 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { useStoriesStore } from '@/stores/stories'
 import { useAuthStore } from '@/stores/auth'
-import { marked } from 'marked'
 import AppHeader from '@/components/layout/AppHeader.vue'
 
-// Configure marked for safe rendering
-marked.setOptions({
-  breaks: true, // Convert \n to <br>
-  gfm: true,    // GitHub Flavored Markdown
-})
-
-// Render markdown content
-const renderMarkdown = (text: string): string => {
-  if (!text) return ''
-  return marked.parse(text) as string
+// Sanitize HTML to prevent XSS (basic sanitization - content comes from our own editor)
+const sanitizeHtml = (html: string): string => {
+  if (!html) return ''
+  // Remove script tags and event handlers
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/on\w+="[^"]*"/gi, '')
+    .replace(/on\w+='[^']*'/gi, '')
 }
 
 const route = useRoute()
@@ -43,6 +40,28 @@ const nextChapter = computed(() => {
   return story.value.chapters[currentIndex.value + 1]
 })
 
+// Reading progress
+const readingProgress = ref(0)
+const contentRef = ref<HTMLElement | null>(null)
+
+const updateReadingProgress = () => {
+  const scrollTop = window.scrollY
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight
+  if (docHeight > 0) {
+    readingProgress.value = Math.min(100, Math.round((scrollTop / docHeight) * 100))
+  }
+}
+
+// Estimated reading time (average 200 words per minute for Ukrainian)
+const readingTime = computed(() => {
+  const words = chapter.value?.word_count ?? 0
+  const minutes = Math.ceil(words / 200)
+  if (minutes < 1) return 'менше хвилини'
+  if (minutes === 1) return '1 хвилина'
+  if (minutes < 5) return `${minutes} хвилини`
+  return `${minutes} хвилин`
+})
+
 const fontSize = ref(18)
 
 const increaseFontSize = () => {
@@ -64,11 +83,33 @@ onMounted(async () => {
 
   // Load chapter content
   await storiesStore.fetchChapter(storyId, chapterId)
+
+  // Add scroll listener for reading progress
+  window.addEventListener('scroll', updateReadingProgress)
+  updateReadingProgress()
+})
+
+// Watch for route changes (navigating between chapters)
+watch(() => route.params.chapterId, async (newChapterId) => {
+  if (newChapterId && typeof newChapterId === 'string') {
+    const storyId = route.params.storyId as string
+    await storiesStore.fetchChapter(storyId, newChapterId)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    readingProgress.value = 0
+  }
+})
+
+// Cleanup
+onUnmounted(() => {
+  window.removeEventListener('scroll', updateReadingProgress)
 })
 </script>
 
 <template>
   <div class="chapter-page">
+    <!-- Reading Progress Bar -->
+    <div class="reading-progress-bar" :style="{ width: readingProgress + '%' }"></div>
+
     <AppHeader />
 
     <main class="main">
@@ -103,7 +144,9 @@ onMounted(async () => {
               <h1 class="chapter-title">
                 {{ chapter.title || `Глава ${chapter.chapter_number}` }}
               </h1>
-              <p class="chapter-words">{{ (chapter.word_count ?? 0).toLocaleString() }} слів</p>
+              <p class="chapter-meta-text">
+                {{ (chapter.word_count ?? 0).toLocaleString() }} слів · {{ readingTime }} читання
+              </p>
             </div>
           </div>
 
@@ -117,16 +160,38 @@ onMounted(async () => {
         </div>
 
         <!-- Chapter Content -->
-        <div class="card content-card">
+        <div class="card content-card" ref="contentRef">
+          <!-- Illustrations before content -->
+          <div v-if="chapter.illustrations?.length" class="illustrations-header">
+            <img
+              v-for="illustration in chapter.illustrations.filter((i: { position: number }) => i.position === 0)"
+              :key="illustration.id"
+              :src="illustration.image_url"
+              :alt="illustration.prompt || 'Ілюстрація'"
+              class="chapter-illustration"
+            />
+          </div>
+
           <div
             v-if="chapter.content"
             class="prose"
             :style="{ fontSize: fontSize + 'px', lineHeight: '1.8' }"
-            v-html="renderMarkdown(chapter.content)"
+            v-html="sanitizeHtml(chapter.content)"
           ></div>
 
           <div v-else class="empty-content">
             <p>Ця глава ще порожня</p>
+          </div>
+
+          <!-- Illustrations after content -->
+          <div v-if="chapter.illustrations?.length" class="illustrations-footer">
+            <img
+              v-for="illustration in chapter.illustrations.filter((i: { position: number }) => i.position > 0)"
+              :key="illustration.id"
+              :src="illustration.image_url"
+              :alt="illustration.prompt || 'Ілюстрація'"
+              class="chapter-illustration"
+            />
           </div>
         </div>
 
@@ -167,6 +232,18 @@ onMounted(async () => {
 .chapter-page {
   min-height: 100vh;
   background: #f9fafb;
+  position: relative;
+}
+
+/* Reading Progress Bar */
+.reading-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #4f46e5, #7c3aed);
+  z-index: 1000;
+  transition: width 0.1s ease-out;
 }
 
 .main {
@@ -269,7 +346,7 @@ onMounted(async () => {
   color: #111827;
 }
 
-.chapter-words {
+.chapter-meta-text {
   font-size: 0.875rem;
   color: #6b7280;
 }
@@ -438,6 +515,30 @@ onMounted(async () => {
 .nav-title {
   font-weight: 500;
   color: #111827;
+}
+
+/* Illustrations */
+.illustrations-header,
+.illustrations-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.illustrations-header {
+  margin-bottom: 32px;
+}
+
+.illustrations-footer {
+  margin-top: 32px;
+}
+
+.chapter-illustration {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 640px) {
