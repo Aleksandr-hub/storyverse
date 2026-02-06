@@ -23,6 +23,7 @@ class StoryQueryService
         $this->applyUserFilter($query, $request);
         $this->applyUniverseFilter($query, $request);
         $this->applyModeFilter($query, $request);
+        $this->applyRatingFilter($query, $request);
         $this->applyTagFilter($query, $request);
         $this->applySearchFilter($query, $request);
         $this->applySorting($query, $request);
@@ -96,6 +97,16 @@ class StoryQueryService
     {
         if ($request->has('mode')) {
             $query->where('mode', $request->string('mode')->toString());
+        }
+    }
+
+    /**
+     * Apply rating filter.
+     */
+    private function applyRatingFilter(Builder $query, Request $request): void
+    {
+        if ($request->has('rating')) {
+            $query->where('rating', $request->string('rating')->toString());
         }
     }
 

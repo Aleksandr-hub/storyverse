@@ -73,6 +73,7 @@ export const storiesApi = {
     universe?: string
     mode?: string
     tag?: string
+    rating?: string
     sort?: string
     direction?: string
     per_page?: number

@@ -20,12 +20,31 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
 const search = ref((route.query.search as string) || '')
 const selectedUniverse = ref((route.query.universe as string) || '')
 const selectedTag = ref((route.query.tag as string) || '')
+const selectedSort = ref((route.query.sort as string) || 'created_at')
+const selectedRating = ref((route.query.rating as string) || '')
+
+const sortOptions = [
+  { value: 'created_at', label: 'Новіші' },
+  { value: 'view_count', label: 'Популярні' },
+  { value: 'like_count', label: 'Найбільше лайків' },
+  { value: 'title', label: 'За назвою' },
+]
+
+const ratingOptions = [
+  { value: '', label: 'Всі рейтинги' },
+  { value: '0+', label: '0+ (Для всіх)' },
+  { value: '12+', label: '12+' },
+  { value: '16+', label: '16+' },
+  { value: '18+', label: '18+ (Для дорослих)' },
+]
 
 const loadStories = async () => {
   await storiesStore.fetchStories({
     search: search.value || undefined,
     universe: selectedUniverse.value || undefined,
     tag: selectedTag.value || undefined,
+    sort: selectedSort.value || undefined,
+    rating: selectedRating.value || undefined,
     page: Number(route.query.page) || 1,
   })
 }
@@ -48,6 +67,18 @@ const selectTag = (id: string) => {
   })
 }
 
+const selectSort = (sort: string) => {
+  router.push({
+    query: { ...route.query, sort: sort !== 'created_at' ? sort : undefined, page: undefined },
+  })
+}
+
+const selectRating = (rating: string) => {
+  router.push({
+    query: { ...route.query, rating: rating || undefined, page: undefined },
+  })
+}
+
 const goToPage = (page: number) => {
   router.push({
     query: { ...route.query, page: page > 1 ? page : undefined },
@@ -58,6 +89,8 @@ watch(() => route.query, () => {
   search.value = (route.query.search as string) || ''
   selectedUniverse.value = (route.query.universe as string) || ''
   selectedTag.value = (route.query.tag as string) || ''
+  selectedSort.value = (route.query.sort as string) || 'created_at'
+  selectedRating.value = (route.query.rating as string) || ''
   loadStories()
 }, { immediate: false })
 
@@ -102,6 +135,34 @@ onMounted(async () => {
               />
               <button @click="handleSearch" class="search-btn">🔍</button>
             </div>
+          </div>
+
+          <!-- Sort -->
+          <div class="card">
+            <label class="filter-label">Сортування</label>
+            <select
+              :value="selectedSort"
+              @change="selectSort(($event.target as HTMLSelectElement).value)"
+              class="filter-select"
+            >
+              <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Rating -->
+          <div class="card">
+            <label class="filter-label">Рейтинг</label>
+            <select
+              :value="selectedRating"
+              @change="selectRating(($event.target as HTMLSelectElement).value)"
+              class="filter-select"
+            >
+              <option v-for="opt in ratingOptions" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
           </div>
 
           <!-- Universes -->
@@ -315,6 +376,23 @@ onMounted(async () => {
 
 .search-btn:hover {
   color: #4f46e5;
+}
+
+.filter-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+  font-size: 0.875rem;
+  color: #374151;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.filter-select:focus {
+  border-color: #4f46e5;
 }
 
 .filter-list {
