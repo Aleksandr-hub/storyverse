@@ -261,6 +261,7 @@ onMounted(async () => {
                 <div class="story-stats">
                   <span>{{ story.chapters_count || 0 }} глав</span>
                   <span>{{ story.view_count }} 👁</span>
+                  <span v-if="story.like_count > 0" class="stat-likes">{{ story.like_count }} ❤️</span>
                 </div>
               </div>
             </RouterLink>
