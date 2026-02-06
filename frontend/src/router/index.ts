@@ -95,6 +95,18 @@ const router = createRouter({
       name: 'auth-callback',
       component: () => import('../views/auth/OAuthCallbackView.vue'),
     },
+    // Error pages
+    {
+      path: '/500',
+      name: 'server-error',
+      component: () => import('../views/errors/ServerErrorView.vue'),
+    },
+    // 404 catch-all (must be last)
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('../views/errors/NotFoundView.vue'),
+    },
   ],
 })
 

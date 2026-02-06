@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { useStoriesStore } from '@/stores/stories'
 import { useAuthStore } from '@/stores/auth'
+import { useMeta } from '@/composables/useMeta'
 import AppHeader from '@/components/layout/AppHeader.vue'
 
 // Sanitize HTML to prevent XSS (basic sanitization - content comes from our own editor)
@@ -24,6 +25,19 @@ const chapter = computed(() => storiesStore.currentChapter)
 const loading = computed(() => storiesStore.loading)
 const currentUser = computed(() => authStore.user)
 const isOwner = computed(() => story.value?.author?.id === currentUser.value?.id)
+
+// SEO Meta tags
+const metaTitle = computed(() => {
+  if (!story.value || !chapter.value) return undefined
+  const chapterTitle = chapter.value.title || `Глава ${chapter.value.chapter_number}`
+  return `${chapterTitle} - ${story.value.title} - StoryVerse`
+})
+const metaDescription = computed(() => story.value?.description || undefined)
+useMeta({
+  title: metaTitle,
+  description: metaDescription,
+  type: 'article',
+})
 
 const currentIndex = computed(() => {
   if (!story.value?.chapters || !chapter.value) return -1

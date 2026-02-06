@@ -4,6 +4,7 @@ import { useRoute, RouterLink } from 'vue-router'
 import { useStoriesStore } from '@/stores/stories'
 import { useAuthStore } from '@/stores/auth'
 import { likesApi, commentsApi } from '@/services/api'
+import { useMeta } from '@/composables/useMeta'
 import AppHeader from '@/components/layout/AppHeader.vue'
 
 interface Comment {
@@ -28,6 +29,17 @@ const error = computed(() => storiesStore.error)
 const currentUser = computed(() => authStore.user)
 const isOwner = computed(() => story.value?.author?.id === currentUser.value?.id)
 const isAuthenticated = computed(() => authStore.isAuthenticated)
+
+// SEO Meta tags
+const metaTitle = computed(() => story.value?.title ? `${story.value.title} - StoryVerse` : undefined)
+const metaDescription = computed(() => story.value?.description || undefined)
+const metaImage = computed(() => story.value?.cover_url || undefined)
+useMeta({
+  title: metaTitle,
+  description: metaDescription,
+  image: metaImage,
+  type: 'article',
+})
 
 // Estimated reading time for entire story (average 200 words per minute for Ukrainian)
 const totalReadingTime = computed(() => {
